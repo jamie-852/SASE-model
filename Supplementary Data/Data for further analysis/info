@@ -1,0 +1,16 @@
+Supplementary data files can be found on: https://drive.google.com/drive/folders/1ft4s1ARe35I3ftknv5fL-kAKDGxOkAcW?usp=sharing
+
+'SampledParameters_Apr2023.csv' shows the 1 million parameter sets generated using g_samples.m.
+Each column represents one parameter.
+  
+'AllSteadyStates.csv' shows all the steady states found from each sampled parameter using 
+'a_SampledParameters.m'.
+  
+'AllVirtualPatients.csv' shows numbered unique parameters set so that we can see how many 
+virtual skin sites are present and how many stable states each of them have. 
+
+'rev_SAkilling.csv' and 'irrev_SAkilling.csv' are the isolated damaged skin states 
+that we applied SA-killing to.
+
+'rev_SAkilling_DA.csv' and 'irrev_SAkilling_DA.csv' are the isolated damaged skin states
+that we applied SA-killing to after bacterial growth attenuation was enhanced by 20-fold. 
