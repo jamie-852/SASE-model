@@ -1,4 +1,4 @@
-% main_steady_states.m
+% main_analyse_steady_states.m
 %
 % Main runner script for steady state analysis pipeline
 % 
@@ -8,7 +8,7 @@
 %
 % USAGE:
 %   1. Modify the CONFIGURATION section below to set your parameters
-%   2. Run this script: matlab -batch "run('main_steady_states.m')"
+%   2. Run this script: matlab -batch "run('main_analyse_steady_states.m')"
 %   3. Results will be saved in data/ folder
 %   4. Figures will be saved in figures/ folder
 %
@@ -18,19 +18,19 @@
 %   used as input for all downstream analyses (violin plots, treatment
 %   effects, etc.)
 %
-% Author: [Your name]
-% Date: [Date]
-% Version: 1.0
+% Author: Jamie Lee
+% Date: 6 October 2025
+% Version: 2.0 - Fixed to match 4-step pipeline requirements
 
 clc;
 clear all;
 close all;
 
-fprintf('╔════════════════════════════════════════════════════════════╗\n');
+fprintf('╔════════════════════════════════════════════════════════╗\n');
 fprintf('║       SASE Model - Steady State Analysis Pipeline          ║\n');
 fprintf('║                                                            ║\n');
 fprintf('║  Generates virtual patients and computes steady states     ║\n');
-fprintf('╚════════════════════════════════════════════════════════════╝\n\n');
+fprintf('╚════════════════════════════════════════════════════════╝\n\n');
 
 %% ═══════════════════════════════════════════════════════════════════════
 %  CONFIGURATION - Modify these parameters as needed
@@ -97,9 +97,9 @@ overall_start = tic;
 %  STEP 1: Generate Parameter Samples
 %  ═══════════════════════════════════════════════════════════════════════
 
-fprintf('╔════════════════════════════════════════════════════════════╗\n');
-fprintf('║  STEP 1/5: Generate Parameter Samples                      ║\n');
-fprintf('╚════════════════════════════════════════════════════════════╝\n\n');
+fprintf('╔════════════════════════════════════════════════════════╗\n');
+fprintf('║  STEP 1/4: Generate Parameter Samples                      ║\n');
+fprintf('╚════════════════════════════════════════════════════════╝\n\n');
 
 step_start = tic;
 
@@ -108,7 +108,6 @@ rng(config.random_seed, 'twister');
 fprintf('→ Random seed set to: %d\n', config.random_seed);
 
 % Call g_samples.m with configuration
-% Note: We'll need to pass config to g_samples or modify it to use workspace vars
 generate_parameter_samples(config);
 
 fprintf('\n✓ Step 1 complete (%.1f seconds)\n\n', toc(step_start));
@@ -117,9 +116,9 @@ fprintf('\n✓ Step 1 complete (%.1f seconds)\n\n', toc(step_start));
 %  STEP 2: Compute Steady States
 %  ═══════════════════════════════════════════════════════════════════════
 
-fprintf('╔════════════════════════════════════════════════════════════╗\n');
-fprintf('║  STEP 2/5: Compute Steady States                           ║\n');
-fprintf('╚════════════════════════════════════════════════════════════╝\n\n');
+fprintf('╔════════════════════════════════════════════════════════╗\n');
+fprintf('║  STEP 2/4: Compute Steady States                           ║\n');
+fprintf('╚════════════════════════════════════════════════════════╝\n\n');
 
 step_start = tic;
 
@@ -132,9 +131,9 @@ fprintf('\n✓ Step 2 complete (%.1f minutes)\n\n', toc(step_start)/60);
 %  STEP 3: Assign Virtual Patient IDs
 %  ═══════════════════════════════════════════════════════════════════════
 
-fprintf('╔════════════════════════════════════════════════════════════╗\n');
-fprintf('║  STEP 3/5: Assign Virtual Patient IDs                      ║\n');
-fprintf('╚════════════════════════════════════════════════════════════╝\n\n');
+fprintf('╔════════════════════════════════════════════════════════╗\n');
+fprintf('║  STEP 3/4: Assign Virtual Patient IDs                      ║\n');
+fprintf('╚════════════════════════════════════════════════════════╝\n\n');
 
 step_start = tic;
 
@@ -147,9 +146,9 @@ fprintf('\n✓ Step 3 complete (%.1f seconds)\n\n', toc(step_start));
 %  STEP 4: Classify into Patient Groups
 %  ═══════════════════════════════════════════════════════════════════════
 
-fprintf('╔════════════════════════════════════════════════════════════╗\n');
-fprintf('║  STEP 4/5: Classify Patient Groups                         ║\n');
-fprintf('╚════════════════════════════════════════════════════════════╝\n\n');
+fprintf('╔════════════════════════════════════════════════════════╗\n');
+fprintf('║  STEP 4/4: Classify Patient Groups                         ║\n');
+fprintf('╚════════════════════════════════════════════════════════╝\n\n');
 
 step_start = tic;
 
@@ -157,21 +156,6 @@ step_start = tic;
 classify_patient_groups(config);
 
 fprintf('\n✓ Step 4 complete (%.1f seconds)\n\n', toc(step_start));
-
-%% ═══════════════════════════════════════════════════════════════════════
-%  STEP 5: Generate Classification Files
-%  ═══════════════════════════════════════════════════════════════════════
-
-fprintf('╔════════════════════════════════════════════════════════════╗\n');
-fprintf('║  STEP 5/5: Generate Classification Files                   ║\n');
-fprintf('╚════════════════════════════════════════════════════════════╝\n\n');
-
-step_start = tic;
-
-% Call g_ClassificationFiles.m
-generate_classification_files(config);
-
-fprintf('\n✓ Step 5 complete (%.1f seconds)\n\n', toc(step_start));
 
 %% ═══════════════════════════════════════════════════════════════════════
 %  COMPLETION - Summary and next steps
@@ -185,9 +169,9 @@ end
 
 total_time = toc(overall_start);
 
-fprintf('╔════════════════════════════════════════════════════════════╗\n');
+fprintf('╔════════════════════════════════════════════════════════╗\n');
 fprintf('║                  PIPELINE COMPLETE                         ║\n');
-fprintf('╚════════════════════════════════════════════════════════════╝\n\n');
+fprintf('╚════════════════════════════════════════════════════════╝\n\n');
 
 fprintf('═══ Summary ═══\n');
 fprintf('Total execution time: %.1f minutes (%.2f hours)\n', total_time/60, total_time/3600);
@@ -195,49 +179,58 @@ fprintf('Random seed used:     %d\n', config.random_seed);
 fprintf('Parameter sets:       %d\n', config.n_samples);
 fprintf('\n');
 
-fprintf('═══ Output Files ═══\n');
-fprintf('Primary output (use this for downstream analysis):\n');
-fprintf('  → %s/AllVirtualPatientTypes_latest.csv\n', config.data_folder);
+fprintf('═══ Primary Output ═══\n');
+fprintf('→ %s/AllVirtualPatientTypes_latest.csv\n', config.data_folder);
 fprintf('\n');
-fprintf('Classification files (for violin plots):\n');
-fprintf('  → %s/asymp.csv (asymptomatic patients)\n', config.data_folder);
-fprintf('  → %s/rev_SAkilling.csv (reversible patients)\n', config.data_folder);
-fprintf('  → %s/irrev_SAkilling.csv (irreversible patients)\n', config.data_folder);
+fprintf('This file contains all virtual patients with clinical classifications.\n');
+fprintf('Structure: 26 columns\n');
+fprintf('  - Column 1:     Patient ID\n');
+fprintf('  - Column 2:     Number of stable states\n');
+fprintf('  - Columns 3-19:  Parameters (17 parameters)\n');
+fprintf('  - Columns 20-22: Steady states (A*, E*, B*)\n');
+fprintf('  - Columns 23-25: Eigenvalues (λ1, λ2, λ3)\n');
+fprintf('  - Column 26:    Category (1-9)\n');
 fprintf('\n');
 
 if config.save_intermediate_files
-    fprintf('Intermediate files:\n');
-    fprintf('  → %s/SampledParameters_latest.csv\n', config.data_folder);
-    fprintf('  → %s/AllSteadyStates_latest.csv\n', config.data_folder);
-    fprintf('  → %s/AllVirtualPatients_latest.csv\n', config.data_folder);
+    fprintf('═══ Intermediate Files ═══\n');
+    fprintf('  → %s/SampledParameters_latest.csv (17 cols)\n', config.data_folder);
+    fprintf('  → %s/AllSteadyStates_latest.csv (23 cols)\n', config.data_folder);
+    fprintf('  → %s/AllVirtualPatients_latest.csv (25 cols)\n', config.data_folder);
     fprintf('\n');
 end
 
 if config.generate_figures
-    fprintf('Figures:\n');
-    fprintf('  → %s/parameter_distributions_%s.png\n', config.figures_folder, config.date_str);
-    fprintf('  → %s/steady_state_analysis_%s.png\n', config.figures_folder, config.date_str);
-    fprintf('  → %s/classification_summary_%s.png\n', config.figures_folder, config.date_str);
+    fprintf('═══ Figures ═══\n');
+    fprintf('  → %s/*.png (various analysis plots)\n', config.figures_folder);
     fprintf('\n');
 end
 
 fprintf('═══ Next Steps ═══\n');
-fprintf('The primary output file contains all virtual patient data.\n');
-fprintf('You can now:\n');
-fprintf('  1. Generate violin plots (Folder 7)\n');
-fprintf('  2. Analyze SA-killing effects (Folder 2)\n');
-fprintf('  3. Analyze dual-action treatment (Folder 3)\n');
-fprintf('  4. Perform custom analyses on AllVirtualPatientTypes_latest.csv\n');
+fprintf('The primary output file is ready for downstream analysis:\n\n');
+fprintf('  1. Generate violin plots\n');
+fprintf('     → Run g_ClassificationFiles.m first to create asymp.csv, reversible.csv, irreversible.csv\n');
+fprintf('     → Then run violin plot scripts\n');
+fprintf('\n');
+fprintf('  2. Analyze SA-killing effects\n');
+fprintf('     → Use AllVirtualPatientTypes_latest.csv as input\n');
+fprintf('\n');
+fprintf('  3. Analyze dual-action treatment\n');
+fprintf('     → Use AllVirtualPatientTypes_latest.csv as input\n');
+fprintf('\n');
+fprintf('  4. Perform custom analyses\n');
+fprintf('     → Load AllVirtualPatientTypes_latest.csv and filter by categories\n');
 fprintf('\n');
 
+fprintf('═══ Reproducibility ═══\n');
 fprintf('To reproduce these exact results, use random seed: %d\n', config.random_seed);
-fprintf('To generate a different patient population, change the random seed in the\n');
-fprintf('CONFIGURATION section and re-run this script.\n');
+fprintf('To generate a different patient population, change the random seed\n');
+fprintf('in the CONFIGURATION section and re-run this script.\n');
 fprintf('\n');
 
-fprintf('╔════════════════════════════════════════════════════════════╗\n');
+fprintf('╔════════════════════════════════════════════════════════╗\n');
 fprintf('║                       DONE!                                ║\n');
-fprintf('╚════════════════════════════════════════════════════════════╝\n');
+fprintf('╚════════════════════════════════════════════════════════╝\n');
 
 %% ═══════════════════════════════════════════════════════════════════════
 %  HELPER FUNCTIONS - These call the actual analysis scripts
@@ -245,23 +238,20 @@ fprintf('╚══════════════════════�
 
 function generate_parameter_samples(config)
     % Wrapper for g_samples.m
-    % This ensures g_samples uses the configuration from main script
-    
-    % We need to modify g_samples.m slightly to accept workspace variables
-    % For now, we'll call it and trust it uses the right config
-    % Alternative: copy the core logic here
     
     fprintf('Generating %d parameter samples...\n', config.n_samples);
+    fprintf('Using random seed: %d\n', config.random_seed);
     fprintf('(This calls g_samples.m)\n\n');
     
-    % Set the variables that g_samples.m expects
-    n_samples = config.n_samples;
-    data_folder = config.data_folder;
-    figures_folder = config.figures_folder;
-    date_str = config.date_str;
+    % Set workspace variables that g_samples.m will use
+    assignin('base', 'n_samples', config.n_samples);
+    assignin('base', 'data_folder', config.data_folder);
+    assignin('base', 'figures_folder', config.figures_folder);
+    assignin('base', 'date_str', config.date_str);
+    assignin('base', 'rng_initialized', true);  % Flag to prevent re-initialization
     
-    % Call the script (it will use variables from workspace)
-    run('g_samples.m');
+    % Run the script in base workspace
+    evalin('base', 'run(''g_samples.m'')');
 end
 
 function compute_steady_states(config)
@@ -269,14 +259,15 @@ function compute_steady_states(config)
     
     fprintf('Computing steady states for all parameter sets...\n');
     fprintf('(This calls a_SampledParameters.m)\n');
-    fprintf('⚠ This step may take several hours for 1 million samples\n\n');
+    fprintf('⚠  This step may take several hours for 1 million samples\n\n');
     
     % Set workspace variables
-    data_folder = config.data_folder;
-    figures_folder = config.figures_folder;
-    date_str = config.date_str;
+    assignin('base', 'n_samples', config.n_samples);
+    assignin('base', 'data_folder', config.data_folder);
+    assignin('base', 'figures_folder', config.figures_folder);
+    assignin('base', 'date_str', config.date_str);
     
-    run('a_SampledParameters.m');
+    evalin('base', 'run(''a_SampledParameters.m'')');
 end
 
 function assign_patient_ids(config)
@@ -286,12 +277,11 @@ function assign_patient_ids(config)
     fprintf('(This calls g_VirtualPatients.m)\n\n');
     
     % Set workspace variables
-    data_folder = config.data_folder;
-    figures_folder = config.figures_folder;
-    date_str = config.date_str;
+    assignin('base', 'data_folder', config.data_folder);
+    assignin('base', 'figures_folder', config.figures_folder);
+    assignin('base', 'date_str', config.date_str);
     
-    % Note: You'll need to update g_VirtualPatients.m to use data_folder
-    run('g_VirtualPatients.m');
+    evalin('base', 'run(''g_VirtualPatients.m'')');
 end
 
 function classify_patient_groups(config)
@@ -301,25 +291,9 @@ function classify_patient_groups(config)
     fprintf('(This calls a_PatientGroups.m)\n\n');
     
     % Set workspace variables
-    data_folder = config.data_folder;
-    figures_folder = config.figures_folder;
-    date_str = config.date_str;
+    assignin('base', 'data_folder', config.data_folder);
+    assignin('base', 'figures_folder', config.figures_folder);
+    assignin('base', 'date_str', config.date_str);
     
-    % Note: You'll need to update a_PatientGroups.m to use data_folder
-    run('a_PatientGroups.m');
-end
-
-function generate_classification_files(config)
-    % Wrapper for g_ClassificationFiles.m
-    
-    fprintf('Generating classification files for downstream analysis...\n');
-    fprintf('(This calls g_ClassificationFiles.m)\n\n');
-    
-    % Set workspace variables
-    data_folder = config.data_folder;
-    figures_folder = config.figures_folder;
-    date_str = config.date_str;
-    
-    % Note: You'll need to update g_ClassificationFiles.m to use data_folder
-    run('g_ClassificationFiles.m');
+    evalin('base', 'run(''a_PatientGroups.m'')');
 end

@@ -10,13 +10,11 @@
 %
 % Dependencies: f_computeCase1.m, f_computeCase2.m, f_computeCase3.m, f_computeCase4.m
 %
-% Author: [Your name]
-% Date: [Date]
+% Author: Jamie Lee
+% Date: 6 October 2025
 % Version: 2.0 - Added data/figures folders, progress tracking, improved clarity
 
 clc;
-% Don't clear all - we want workspace variables from main script
-% clear all;
 close all;
 
 fprintf('=== Steady State Analysis Script ===\n');
@@ -280,71 +278,6 @@ stable = (lambda1 < 0) & (lambda2 < 0) & (lambda3 < 0);
 fprintf('\nStability analysis:\n');
 fprintf('  Stable steady states: %d (%.1f%%)\n', sum(stable), 100*mean(stable));
 fprintf('  Unstable steady states: %d (%.1f%%)\n', sum(~stable), 100*mean(~stable));
-
-%% Create visualization
-fprintf('\nGenerating steady state distribution plots...\n');
-
-figure('Position', [100, 100, 1400, 900]);
-
-% Plot 1: A* vs E* colored by B*
-subplot(2, 3, 1);
-scatter(log10(A_star), log10(E_star), 10, B_star, 'filled', 'MarkerFaceAlpha', 0.5);
-xlabel('log_{10}(A*) - SA Population', 'FontSize', 11);
-ylabel('log_{10}(E*) - SE Population', 'FontSize', 11);
-title('SA vs SE Steady States', 'FontWeight', 'bold');
-colorbar;
-caxis([0 1]);
-colormap(gca, parula);
-grid on;
-
-% Plot 2: B* distribution
-subplot(2, 3, 2);
-histogram(B_star, 50, 'FaceColor', [0.8, 0.2, 0.2]);
-xlabel('B* (Barrier Function)', 'FontSize', 11);
-ylabel('Frequency', 'FontSize', 11);
-title('Barrier Function Distribution', 'FontWeight', 'bold');
-grid on;
-xline(1.0, 'k--', 'LineWidth', 2, 'Label', 'Healthy');
-
-% Plot 3: Stability
-subplot(2, 3, 3);
-categories = categorical({'Stable', 'Unstable'});
-bar(categories, [sum(stable), sum(~stable)], 'FaceColor', [0.2, 0.4, 0.8]);
-ylabel('Number of Steady States', 'FontSize', 11);
-title('Stability Analysis', 'FontWeight', 'bold');
-grid on;
-
-% Plot 4: A* distribution (log scale)
-subplot(2, 3, 4);
-histogram(log10(A_star), 50, 'FaceColor', [0.2, 0.6, 0.2]);
-xlabel('log_{10}(A*) - SA Population', 'FontSize', 11);
-ylabel('Frequency', 'FontSize', 11);
-title('SA Population Distribution', 'FontWeight', 'bold');
-grid on;
-
-% Plot 5: E* distribution (log scale)
-subplot(2, 3, 5);
-histogram(log10(E_star), 50, 'FaceColor', [0.2, 0.2, 0.8]);
-xlabel('log_{10}(E*) - SE Population', 'FontSize', 11);
-ylabel('Frequency', 'FontSize', 11);
-title('SE Population Distribution', 'FontWeight', 'bold');
-grid on;
-
-% Plot 6: B* by stability
-subplot(2, 3, 6);
-boxplot(B_star, stable, 'Labels', {'Unstable', 'Stable'});
-ylabel('B* (Barrier Function)', 'FontSize', 11);
-title('Barrier Function by Stability', 'FontWeight', 'bold');
-grid on;
-yline(1.0, 'k--', 'LineWidth', 2);
-
-sgtitle(sprintf('Steady State Analysis - %d States from %d Parameter Sets', ...
-    size(AllSteadyStates, 1), total_samples), 'FontSize', 14, 'FontWeight', 'bold');
-
-% Save figure
-fig_filename = fullfile(figures_folder, sprintf('steady_state_analysis_%s.png', date_str));
-saveas(gcf, fig_filename);
-fprintf('  ✓ Saved figure: %s\n', fig_filename);
 
 %% Completion message
 elapsed_time = toc;

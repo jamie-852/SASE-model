@@ -2,13 +2,13 @@
 %
 % Purpose: Generate parameter samples for virtual patient generation
 %          Samples 1 million parameter sets from log-uniform distributions
-%          based on ranges defined in Table 1, Supplementary Note S2
+%          based on ranges defined in Supplementary Table S1
 %
 % Outputs: SampledParameters_[date].csv in ./output/ folder
-%          Contains 17 columns (16 parameters + 1 constant)
+%          Contains 17 columns (15 parameters + 2 constants)
 %
-% Author: [Your name]
-% Date: [Date]
+% Author: Jamie Lee
+% Date: 6 October 2025
 % Version: 2.0 - Added output folder, improved clarity
 
 clc;
@@ -16,7 +16,6 @@ clc;
 % clear all;  
 close all;
 
-fprintf('=== Parameter Sampling Script ===\n');
 fprintf('Generating parameter samples...\n\n');
 
 %% Configuration - Use main script values if available, otherwise use defaults
@@ -183,7 +182,7 @@ fprintf('  ✓ Saved latest CSV: %s\n', csv_latest);
 %% Display summary statistics
 fprintf('\n=== Summary Statistics ===\n');
 fprintf('Sample size: %d parameter sets\n', n_samples);
-fprintf('Parameters: %d (16 sampled + 1 constant)\n', size(samples, 2));
+fprintf('Parameters: %d (15 sampled + 2 constants)\n', size(samples, 2));
 fprintf('\nParameter ranges (log scale unless noted):\n');
 fprintf('  SA parameters:\n');
 fprintf('    log(kappa_A):  [%.3f, %.3f]\n', min(log_kappa_A), max(log_kappa_A));
@@ -199,6 +198,6 @@ fprintf('    log(delta_B):  [%.3f, %.3f]\n', min(log_delta_B), max(log_delta_B))
 %% Completion message
 fprintf('\n=== Parameter Sampling Complete ===\n');
 fprintf('Total execution time: %.2f seconds\n', toc);
-fprintf('\nNext step: Run a_SampledParameters.m to analyze steady states\n');
+fprintf('\nNext step: Run a_SampledParameters.m to analyse steady states\n');
 
 %% End of script

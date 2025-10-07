@@ -4,67 +4,97 @@
 %          Separates virtual patients into three categories based on their
 %          stable states and barrier function (B*) values
 %
-% Input:  AllVirtualPatientTypes.csv (or .mat) - 26 columns
-%         Columns 1-17: Model parameters
-%         Columns 18-20: Steady states (A*, E*, B*)
-%         Columns 21-23: Eigenvalues
-%         Columns 24-26: Classifications
+% Input:  data/AllVirtualPatientTypes_latest.csv - 26 columns
+%         Col 1: Patient ID
+%         Col 2: Number of stable states
+%         Cols 3-19: Parameters (17 columns)
+%         Cols 20-22: Steady states (A*, E*, B*)
+%         Cols 23-25: Eigenvalues (λ1, λ2, λ3)
+%         Col 26: Category (1-9)
 %
-% Output: Three CSV files for violin plot generation:
+% Output: Three CSV files in data/ folder for violin plot generation:
 %         - asymp.csv: Patients with ONLY B*=1 (asymptomatic)
-%         - rev_SAkilling.csv: Patients with B*=1 AND B*<1 (reversible)
-%         - irrev_SAkilling.csv: Patients with ONLY B*<1 (irreversible)
+%         - reversible.csv: Patients with B*=1 AND B*<1 (reversible)
+%         - irreversible.csv: Patients with ONLY B*<1 (irreversible)
 %
-% Author: [Your name]
-% Date: [Date]
-% Version: 1.0
+% Author: Jamie Lee
+% Date: 6 October 2025
+% Version: 2.0 - Updated for data/ folder structure
 
-%% Clear workspace and load data
-clear all;
-close all;
 clc;
+% Don't clear all - keeps workspace variables from main script
+% clear all;
+close all;
 
 fprintf('=== Classification File Generator ===\n');
-fprintf('Loading virtual patient data...\n');
+fprintf('Loading virtual patient data...\n\n');
 
-% Load the AllVirtualPatientTypes file
-% Adjust the filename if your file has a different name
-filename = 'AllVirtualPatientTypes.csv';
-
-if ~exist(filename, 'file')
-    % Try .mat file if CSV doesn't exist
-    filename_mat = 'AllVirtualPatientTypes.mat';
-    if exist(filename_mat, 'file')
-        data = load(filename_mat);
-        % Extract the data array (adjust variable name if needed)
-        fieldnames_list = fieldnames(data);
-        all_data = data.(fieldnames_list{1});
-    else
-        error('Could not find AllVirtualPatientTypes.csv or .mat file');
-    end
-else
-    all_data = readmatrix(filename);
+%% Configuration - Use main script values if available, otherwise use defaults
+if ~exist('data_folder', 'var')
+    data_folder = 'data';
+end
+if ~exist('figures_folder', 'var')
+    figures_folder = 'figures';
+end
+if ~exist('date_str', 'var')
+    date_str = datestr(now, 'yyyy-mm-dd');
 end
 
-fprintf('Loaded %d virtual patients\n', size(all_data, 1));
+% Create folders if needed
+if ~exist(data_folder, 'dir')
+    mkdir(data_folder);
+end
+if ~exist(figures_folder, 'dir')
+    mkdir(figures_folder);
+end
+
+%% Load data from data folder
+input_file = fullfile(data_folder, 'AllVirtualPatientTypes_latest.csv');
+
+if ~exist(input_file, 'file')
+    % Try .mat file if CSV doesn't exist
+    input_file_mat = fullfile(data_folder, 'AllVirtualPatientTypes_latest.mat');
+    if exist(input_file_mat, 'file')
+        data = load(input_file_mat);
+        % Extract the data array
+        fieldnames_list = fieldnames(data);
+        all_data = data.(fieldnames_list{1});
+        fprintf('  ✓ Loaded from MAT file\n');
+    else
+        error('Could not find AllVirtualPatientTypes_latest.csv or .mat in %s/ folder\nPlease run a_PatientGroups.m first.', data_folder);
+    end
+else
+    all_data = readmatrix(input_file);
+    fprintf('  ✓ Loaded from CSV file\n');
+end
+
+n_states = size(all_data, 1);
+n_unique_patients = length(unique(all_data(:, 1)));
+
+fprintf('  ✓ Total states: %d\n', n_states);
+fprintf('  ✓ Unique patients: %d\n', n_unique_patients);
+fprintf('  ✓ Input file: %s\n', input_file);
 
 %% Extract relevant columns
-% Assuming each virtual patient may have multiple rows (one per stable state)
-% Column 1: Site ID
-% Column 20: B* (barrier function steady state)
-% Column 24: Type classification (if available)
+% Column 1: Patient ID
+% Column 22: B* (barrier function steady state)
+% Column 26: Category (not used for this classification, but available)
 
 site_ids = all_data(:, 1);
-B_star = all_data(:, 20);
+B_star = all_data(:, 22);
 
 % Precision threshold for comparing B* to 1.0
 % Adjust this threshold based on your numerical precision
 B_threshold = 1e-6;  % B* is considered 1.0 if abs(B* - 1) < threshold
 
+fprintf('\n  Using B* threshold: %.0e\n', B_threshold);
+fprintf('  (B* is "healthy" if |B* - 1.0| < %.0e)\n', B_threshold);
+
 %% Group by virtual patient site ID
 unique_sites = unique(site_ids);
 n_sites = length(unique_sites);
 
+fprintf('\n=== Classifying Virtual Patients ===\n');
 fprintf('Processing %d unique virtual skin sites...\n', n_sites);
 
 % Initialize storage for each category
@@ -79,7 +109,7 @@ n_irrev = 0;
 
 %% Classify each virtual patient
 for i = 1:n_sites
-    % Get all rows for this site
+    % Get all rows (stable states) for this patient
     site_mask = site_ids == unique_sites(i);
     site_data = all_data(site_mask, :);
     site_B_values = B_star(site_mask);
@@ -106,67 +136,64 @@ for i = 1:n_sites
         
     else
         % Edge case: no clear classification (shouldn't happen)
-        warning('Site %d has no clear classification', unique_sites(i));
+        warning('Patient %d has no clear classification', unique_sites(i));
     end
 end
 
+fprintf('  ✓ Classification complete\n');
+
 %% Display classification summary
 fprintf('\n=== Classification Summary ===\n');
-fprintf('Asymptomatic (only B*=1):      %d sites (%.1f%%)\n', ...
+fprintf('Asymptomatic (only B*=1):      %6d patients (%5.1f%%)\n', ...
     n_asymp, 100*n_asymp/n_sites);
-fprintf('Reversible (B*=1 and B*<1):    %d sites (%.1f%%)\n', ...
+fprintf('Reversible (B*=1 and B*<1):    %6d patients (%5.1f%%)\n', ...
     n_rev, 100*n_rev/n_sites);
-fprintf('Irreversible (only B*<1):      %d sites (%.1f%%)\n', ...
+fprintf('Irreversible (only B*<1):      %6d patients (%5.1f%%)\n', ...
     n_irrev, 100*n_irrev/n_sites);
-fprintf('Total:                         %d sites\n', n_sites);
+fprintf('                               -------\n');
+fprintf('Total:                         %6d patients\n', n_sites);
 
 %% Save classification files
 fprintf('\n=== Saving Classification Files ===\n');
 
 % Save asymptomatic
 if ~isempty(asymp_sites)
-    writematrix(asymp_sites, 'asymp.csv');
-    fprintf('Saved asymp.csv: %d rows\n', size(asymp_sites, 1));
+    output_file = fullfile(data_folder, 'asymp.csv');
+    writematrix(asymp_sites, output_file);
+    fprintf('  ✓ Saved %s\n', output_file);
+    fprintf('    %d rows (%d patients)\n', size(asymp_sites, 1), n_asymp);
 else
     warning('No asymptomatic sites found');
 end
 
 % Save reversible
 if ~isempty(rev_sites)
-    writematrix(rev_sites, 'rev_SAkilling.csv');
-    fprintf('Saved rev_SAkilling.csv: %d rows\n', size(rev_sites, 1));
+    output_file = fullfile(data_folder, 'reversible.csv');
+    writematrix(rev_sites, output_file);
+    fprintf('  ✓ Saved %s\n', output_file);
+    fprintf('    %d rows (%d patients)\n', size(rev_sites, 1), n_rev);
 else
     warning('No reversible sites found');
 end
 
 % Save irreversible
 if ~isempty(irrev_sites)
-    writematrix(irrev_sites, 'irrev_SAkilling.csv');
-    fprintf('Saved irrev_SAkilling.csv: %d rows\n', size(irrev_sites, 1));
+    output_file = fullfile(data_folder, 'irreversible.csv');
+    writematrix(irrev_sites, output_file);
+    fprintf('  ✓ Saved %s\n', output_file);
+    fprintf('    %d rows (%d patients)\n', size(irrev_sites, 1), n_irrev);
 else
     warning('No irreversible sites found');
 end
 
+%% Summary
 fprintf('\n=== Classification Complete ===\n');
-fprintf('Files are ready for violin plot generation\n');
-
-%% Optional: Create a summary visualization
-figure('Position', [100, 100, 800, 600]);
-
-% Pie chart of classifications
-labels = {'Asymptomatic', 'Reversible', 'Irreversible'};
-counts = [n_asymp, n_rev, n_irrev];
-colors = [0.2, 0.8, 0.2;  % Green for asymptomatic
-          1.0, 0.8, 0.0;  % Yellow for reversible
-          0.8, 0.2, 0.2]; % Red for irreversible
-
-pie(counts, labels);
-colormap(colors);
-title(sprintf('Virtual Patient Classification (N=%d)', n_sites), ...
-      'FontSize', 14, 'FontWeight', 'bold');
-
-% Save figure
-saveas(gcf, 'classification_summary.png');
-fprintf('Saved classification_summary.png\n');
+fprintf('All files saved to %s/ folder\n', data_folder);
+fprintf('\nOutput files:\n');
+fprintf('  - asymp.csv (%d patients, %d states)\n', n_asymp, size(asymp_sites, 1));
+fprintf('  - reversible.csv (%d patients, %d states)\n', n_rev, size(rev_sites, 1));
+fprintf('  - irreversible.csv (%d patients, %d states)\n', n_irrev, size(irrev_sites, 1));
+fprintf('\nThese files are ready for violin plot generation.\n');
+fprintf('Each file contains all stable states for patients in that category.\n');
 
 %% End of script
