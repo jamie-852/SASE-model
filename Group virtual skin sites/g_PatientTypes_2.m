@@ -1,29 +1,73 @@
-%clc 
-%clear all
-%% Script to plot patient types with two stable states
-% Separate patients types depending on (1) number of stable states and (2)
-% location of stable states
-% _______________________________________________________________________
+% g_PatientTypes_2.m
+%
+% Purpose: Plot virtual skin sites with TWO stable steady states
+%          Groups by region combinations (pairs from regions 1-8)
+%
+% Inputs:  AllVirtualPatientTypes (workspace) or Two_StableState.csv
+% Outputs: Figure with subplots showing different 2-state combinations
+%          Saved as PatientTypes_2_SteadyStates.png
+%
+% Author: Jamie Lee
+% Date: 7 October 2025
+% Version: 2.0 - Tidied and organized
 
-% identify patients with two stable states
-%{
-PatientsTwo = [];
+clc;
 
-parfor i = 1:length(AllVirtualPatientTypes)
-    if AllVirtualPatientTypes(i, 2) == 2
-        PatientsTwo = [PatientsTwo; AllVirtualPatientTypes(i, :)];
-    end 
+fprintf('=== Plotting Patients with 2 Steady States ===\n\n');
+
+%% Step 1: Load or filter data for 2-state patients
+fprintf('[1/4] Loading data for 2-state patients...\n');
+
+% Define data file path (relative to Group virtual skin sites folder)
+data_file = '../Analyse steady states/data/AllVirtualPatientTypes_latest.csv';
+
+% Option 1: Filter from workspace variable
+if exist('AllVirtualPatientTypes', 'var')
+    fprintf('  Using AllVirtualPatientTypes from workspace\n');
+    PatientsTwo = [];
+    for i = 1:size(AllVirtualPatientTypes, 1)
+        if AllVirtualPatientTypes(i, 2) == 2
+            PatientsTwo = [PatientsTwo; AllVirtualPatientTypes(i, :)];
+        end 
+    end
+    writematrix(PatientsTwo, 'Two_StableState.csv');
+    fprintf('  ✓ Saved Two_StableState.csv\n');
+    
+% Option 2: Load from filtered file
+elseif exist('Two_StableState.csv', 'file')
+    fprintf('  Loading from Two_StableState.csv\n');
+    PatientsTwo = readmatrix('Two_StableState.csv');
+    fprintf('  ✓ Loaded\n');
+    
+% Option 3: Load and filter from main data file
+elseif exist(data_file, 'file')
+    fprintf('  Loading and filtering from %s\n', data_file);
+    AllVirtualPatientTypes = readmatrix(data_file);
+    PatientsTwo = [];
+    for i = 1:size(AllVirtualPatientTypes, 1)
+        if AllVirtualPatientTypes(i, 2) == 2
+            PatientsTwo = [PatientsTwo; AllVirtualPatientTypes(i, :)];
+        end 
+    end
+    writematrix(PatientsTwo, 'Two_StableState.csv');
+    fprintf('  ✓ Filtered and saved Two_StableState.csv\n');
+    
+else
+    error(['No data found. Need one of:\n' ...
+           '  1. AllVirtualPatientTypes variable in workspace\n' ...
+           '  2. Two_StableState.csv file in current directory\n' ...
+           '  3. %s file'], data_file);
 end
 
-writematrix(PatientsTwo, 'Two_StableState.csv');
-%}
+fprintf('  Total: %d patients with 2 steady states\n', size(PatientsTwo, 1) / 2);
 
-%{
-PatientsTwo = readmatrix('Two_StableState.csv'); 
+%% Step 2: Preprocess for log-scale plotting
+fprintf('\n[2/4] Preprocessing for log-scale plotting...\n');
 
-% duplicate to plot
 logPatientsTwo = PatientsTwo;
-for i = 1:length(PatientsTwo)
+
+% Replace zero populations with 1 for log plotting
+for i = 1:size(PatientsTwo, 1)
     if PatientsTwo(i, 20) == 0 && PatientsTwo(i, 21) == 0
         logPatientsTwo(i, 20) = 1;
         logPatientsTwo(i, 21) = 1;  
@@ -33,726 +77,179 @@ for i = 1:length(PatientsTwo)
         logPatientsTwo(i, 21) = 1;  
     end
     
-    % we define a healthy state by B = 1 and a damaged state by B < 1
+    % Set damaged barrier (B* < 1) to 0.1 for red coloring
     if PatientsTwo(i, 22) < 1
         logPatientsTwo(i, 22) = 0.1; 
     end 
 end
-%}
 
-%% create a scatter plot for each case
-% ________________________________________________________________________
-% combine 8. and 9. based on Supplementary Note 3
+fprintf('  ✓ Preprocessed %d rows\n', size(logPatientsTwo, 1));
 
-% 1. A* = 0, E* = 0 and B* = 1                (sw_A = sw_E = 0)
-% 2. 0 < A* < A_th, E* = 0 and B* = 1         (sw_A = sw_E = 0)
-% 3. A* = 0, 0 < E* < E_th and B* = 1         (sw_A = sw_E = 0)
-% 4. 0 < A* < A_th, 0 < E* < E_th and B* = 1  (sw_A = sw_E = 0)
-% 5. A* = 0, E_th <= E* <= E_max and B* = 1   (sw_A = 0 and sw_E = 1)
-% 6. 0 < A* < A_th, E_th <= E* <= E_max and B* = 1   (sw_A = 0 and sw_E = 1)
-% 7. A_th <= A* <= A_max, E* = 0              (sw_A = 1 and sw_E = 0)
-% 8. A_th <= A* <= A_max, 0 < E* <= E_th      (sw_A = 1 and sw_E = 0)
-% 9. A_th <= A* <= A_max, A_th <= E* <= E_max (sw_A = 1 and sw_E = 1)
+%% Step 3: Sort into region combinations
+fprintf('\n[3/4] Grouping by region combinations...\n');
+fprintf('  Note: Regions 8 and 9 are merged\n');
 
-% consider all possible combinations (8 choose 2 = 28)
-comb_1 = [];
-comb_2 = [];
-comb_3 = [];
-comb_4 = [];
-comb_5 = [];
-comb_6 = [];
-comb_7 = [];
-comb_8 = [];
-comb_9 = [];
-comb_10 = [];
-comb_11 = [];
-comb_12 = [];
-comb_13 = [];
-comb_14 = [];
-comb_15 = [];
-comb_16 = [];
-comb_17 = [];
-comb_18 = [];
-comb_19 = [];
-comb_20 = [];
-comb_21 = [];
-comb_22 = [];
-comb_23 = [];
-comb_24 = [];
-comb_25 = [];
-comb_26 = [];
-comb_27 = [];
-comb_28 = [];
-comb_29 = [];
+% Initialize combination arrays (28 possible pairs from regions 1-8)
+comb_1_2 = []; comb_1_3 = []; comb_1_4 = []; comb_1_5 = [];
+comb_1_6 = []; comb_1_7 = []; comb_1_8 = [];
+comb_2_3 = []; comb_2_4 = []; comb_2_5 = []; comb_2_6 = [];
+comb_2_7 = []; comb_2_8 = [];
+comb_3_4 = []; comb_3_5 = []; comb_3_6 = []; comb_3_7 = [];
+comb_3_8 = [];
+comb_4_5 = []; comb_4_6 = []; comb_4_7 = []; comb_4_8 = [];
+comb_5_6 = []; comb_5_7 = []; comb_5_8 = [];
+comb_6_7 = []; comb_6_8 = [];
+comb_7_8 = [];
 
-parfor j = 1 : (length(logPatientsTwo) - 1)
-    if logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 1 || logPatientsTwo(j + 1, 26) == 1) && ...
-            (logPatientsTwo(j, 26) == 2 || logPatientsTwo(j + 1, 26) == 2))
-
-        combine_1 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_1 = [comb_1; combine_1];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 1 || logPatientsTwo(j + 1, 26) == 1) && ...
-            (logPatientsTwo(j, 26) == 3 || logPatientsTwo(j + 1, 26) == 3))
-        
-        combine_2 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_2 = [comb_2; combine_2];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 1 || logPatientsTwo(j + 1, 26) == 1) && ...
-            (logPatientsTwo(j, 26) == 4 || logPatientsTwo(j + 1, 26) == 4))
-        
-        combine_3 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_3 = [comb_3; combine_3];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 1 || logPatientsTwo(j + 1, 26) == 1) && ...
-            (logPatientsTwo(j, 26) == 5 || logPatientsTwo(j + 1, 26) == 5))
-        
-        combine_4 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_4 = [comb_4; combine_4];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 1 || logPatientsTwo(j + 1, 26) == 1) && ...
-            (logPatientsTwo(j, 26) == 6 || logPatientsTwo(j + 1, 26) == 6))
-        
-        combine_5 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_5 = [comb_5; combine_5];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 1 || logPatientsTwo(j + 1, 26) == 1) && ...
-            (logPatientsTwo(j, 26) == 7 || logPatientsTwo(j + 1, 26) == 7))
-
-        combine_6 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_6 = [comb_6; combine_6];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 1 || logPatientsTwo(j + 1, 26) == 1) && ...
-            ((logPatientsTwo(j, 26) == 8 || logPatientsTwo(j, 26) == 9) || ...
-            (logPatientsTwo(j+1, 26) == 8 || logPatientsTwo(j+1, 26) == 9)))
-
-        combine_7 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_7 = [comb_7; combine_7];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 2 || logPatientsTwo(j + 1, 26) == 2) && ...
-            (logPatientsTwo(j, 26) == 3 || logPatientsTwo(j + 1, 26) == 3))
-        
-        combine_8 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_8 = [comb_8; combine_8];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 2 || logPatientsTwo(j + 1, 26) == 2) && ...
-            (logPatientsTwo(j, 26) == 4 || logPatientsTwo(j + 1, 26) == 4))
-        
-        combine_9 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_9 = [comb_9; combine_9];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 2 || logPatientsTwo(j + 1, 26) == 2) && ...
-            (logPatientsTwo(j, 26) == 5 || logPatientsTwo(j + 1, 26) == 5))
-        
-        combine_10 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_10 = [comb_10; combine_10];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 2 || logPatientsTwo(j + 1, 26) == 2) && ...
-            (logPatientsTwo(j, 26) == 6 || logPatientsTwo(j + 1, 26) == 6))
-        
-        combine_11 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_11 = [comb_11; combine_11];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 2 || logPatientsTwo(j + 1, 26) == 2) && ...
-            (logPatientsTwo(j, 26) == 7 || logPatientsTwo(j + 1, 26) == 7))
-        
-        combine_12 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_12 = [comb_12; combine_12];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 2 || logPatientsTwo(j + 1, 26) == 2) && ...
-            ((logPatientsTwo(j, 26) == 8 || logPatientsTwo(j, 26) == 9) || ...
-            (logPatientsTwo(j+1, 26) == 8 || logPatientsTwo(j+1, 26) == 9)))
-        
-        combine_13 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_13 = [comb_13; combine_13];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 3 || logPatientsTwo(j + 1, 26) == 3) && ...
-            (logPatientsTwo(j, 26) == 4 || logPatientsTwo(j + 1, 26) == 4))
-        
-        combine_14 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_14 = [comb_14; combine_14];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 3 || logPatientsTwo(j + 1, 26) == 3) && ...
-            (logPatientsTwo(j, 26) == 5 || logPatientsTwo(j + 1, 26) == 5))
-        
-        combine_15 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_15 = [comb_15; combine_15];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 3 || logPatientsTwo(j + 1, 26) == 3) && ...
-            (logPatientsTwo(j, 26) == 6 || logPatientsTwo(j + 1, 26) == 6))
-        
-        combine_16 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_16 = [comb_16; combine_16];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 3 || logPatientsTwo(j + 1, 26) == 3) && ...
-            (logPatientsTwo(j, 26) == 7 || logPatientsTwo(j + 1, 26) == 7))
-        
-        combine_17 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_17 = [comb_17; combine_17];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 3 || logPatientsTwo(j + 1, 26) == 3) && ...
-            ((logPatientsTwo(j, 26) == 8 || logPatientsTwo(j, 26) == 9) || ...
-            (logPatientsTwo(j+1, 26) == 8 || logPatientsTwo(j+1, 26) == 9)))
-        
-        combine_18 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_18 = [comb_18; combine_18];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 4 || logPatientsTwo(j + 1, 26) == 4) && ...
-            (logPatientsTwo(j, 26) == 5 || logPatientsTwo(j + 1, 26) == 5))
-        
-        combine_19 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_19 = [comb_19; combine_19];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 4 || logPatientsTwo(j + 1, 26) == 4) && ...
-            (logPatientsTwo(j, 26) == 6 || logPatientsTwo(j + 1, 26) == 6))
-        
-        combine_20 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_20 = [comb_20; combine_20];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 4 || logPatientsTwo(j + 1, 26) == 4) && ...
-            (logPatientsTwo(j, 26) == 7 || logPatientsTwo(j + 1, 26) == 7))
-        
-        combine_21 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_21 = [comb_21; combine_21];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 4 || logPatientsTwo(j + 1, 26) == 4) && ...
-            ((logPatientsTwo(j, 26) == 8 || logPatientsTwo(j, 26) == 9) || ...
-            (logPatientsTwo(j+1, 26) == 8 || logPatientsTwo(j+1, 26) == 9)))
-        
-        combine_22 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_22 = [comb_22; combine_22];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 5 || logPatientsTwo(j + 1, 26) == 5) && ...
-            (logPatientsTwo(j, 26) == 6 || logPatientsTwo(j + 1, 26) == 6))
-
-        combine_23 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_23 = [comb_23; combine_23];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 5 || logPatientsTwo(j + 1, 26) == 5) && ...
-            (logPatientsTwo(j, 26) == 7 || logPatientsTwo(j + 1, 26) == 7))
-
-        combine_24 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_24 = [comb_24; combine_24];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 5 || logPatientsTwo(j + 1, 26) == 5) && ...
-            ((logPatientsTwo(j, 26) == 8 || logPatientsTwo(j, 26) == 9) || ...
-            (logPatientsTwo(j+1, 26) == 8 || logPatientsTwo(j+1, 26) == 9)))
-        
-        combine_25 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_25 = [comb_25; combine_25];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 6 || logPatientsTwo(j + 1, 26) == 6) && ...
-            (logPatientsTwo(j, 26) == 7 || logPatientsTwo(j + 1, 26) == 7))
-        
-        combine_26 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_26 = [comb_26; combine_26];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 6 || logPatientsTwo(j + 1, 26) == 6) && ...
-            ((logPatientsTwo(j, 26) == 8 || logPatientsTwo(j, 26) == 9) || ...
-            (logPatientsTwo(j+1, 26) == 8 || logPatientsTwo(j+1, 26) == 9)))
-        
-        combine_27 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_27 = [comb_27; combine_27];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 7 || logPatientsTwo(j + 1, 26) == 7) && ...
-            ((logPatientsTwo(j, 26) == 8 || logPatientsTwo(j, 26) == 9) || ...
-            (logPatientsTwo(j+1, 26) == 8 || logPatientsTwo(j+1, 26) == 9)))
-        
-        combine_28 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_28 = [comb_28; combine_28];
-
-    elseif logPatientsTwo(j, 1) == logPatientsTwo(j + 1, 1) && ...
-            ((logPatientsTwo(j, 26) == 8 || logPatientsTwo(j + 1, 26) == 8) && ...
-            (logPatientsTwo(j, 26) == 9 || logPatientsTwo(j + 1, 26) == 9))
-        combine_29 = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
-        comb_29 = [comb_29; combine_29];
-    end 
+% Sort patients into combinations
+for j = 1:(size(logPatientsTwo, 1) - 1)
+    % Check if this and next row are same patient
+    if logPatientsTwo(j, 1) ~= logPatientsTwo(j + 1, 1)
+        continue;
+    end
+    
+    % Get the two regions (merging 8 and 9)
+    region1 = logPatientsTwo(j, 26);
+    region2 = logPatientsTwo(j + 1, 26);
+    if region1 == 9, region1 = 8; end
+    if region2 == 9, region2 = 8; end
+    
+    % Sort to ensure consistent ordering
+    regions = sort([region1, region2]);
+    
+    % Store the patient pair
+    pair = [logPatientsTwo(j, :); logPatientsTwo(j + 1, :)];
+    
+    % Assign to appropriate combination
+    if isequal(regions, [1, 2]), comb_1_2 = [comb_1_2; pair];
+    elseif isequal(regions, [1, 3]), comb_1_3 = [comb_1_3; pair];
+    elseif isequal(regions, [1, 4]), comb_1_4 = [comb_1_4; pair];
+    elseif isequal(regions, [1, 5]), comb_1_5 = [comb_1_5; pair];
+    elseif isequal(regions, [1, 6]), comb_1_6 = [comb_1_6; pair];
+    elseif isequal(regions, [1, 7]), comb_1_7 = [comb_1_7; pair];
+    elseif isequal(regions, [1, 8]), comb_1_8 = [comb_1_8; pair];
+    elseif isequal(regions, [2, 3]), comb_2_3 = [comb_2_3; pair];
+    elseif isequal(regions, [2, 4]), comb_2_4 = [comb_2_4; pair];
+    elseif isequal(regions, [2, 5]), comb_2_5 = [comb_2_5; pair];
+    elseif isequal(regions, [2, 6]), comb_2_6 = [comb_2_6; pair];
+    elseif isequal(regions, [2, 7]), comb_2_7 = [comb_2_7; pair];
+    elseif isequal(regions, [2, 8]), comb_2_8 = [comb_2_8; pair];
+    elseif isequal(regions, [3, 4]), comb_3_4 = [comb_3_4; pair];
+    elseif isequal(regions, [3, 5]), comb_3_5 = [comb_3_5; pair];
+    elseif isequal(regions, [3, 6]), comb_3_6 = [comb_3_6; pair];
+    elseif isequal(regions, [3, 7]), comb_3_7 = [comb_3_7; pair];
+    elseif isequal(regions, [3, 8]), comb_3_8 = [comb_3_8; pair];
+    elseif isequal(regions, [4, 5]), comb_4_5 = [comb_4_5; pair];
+    elseif isequal(regions, [4, 6]), comb_4_6 = [comb_4_6; pair];
+    elseif isequal(regions, [4, 7]), comb_4_7 = [comb_4_7; pair];
+    elseif isequal(regions, [4, 8]), comb_4_8 = [comb_4_8; pair];
+    elseif isequal(regions, [5, 6]), comb_5_6 = [comb_5_6; pair];
+    elseif isequal(regions, [5, 7]), comb_5_7 = [comb_5_7; pair];
+    elseif isequal(regions, [5, 8]), comb_5_8 = [comb_5_8; pair];
+    elseif isequal(regions, [6, 7]), comb_6_7 = [comb_6_7; pair];
+    elseif isequal(regions, [6, 8]), comb_6_8 = [comb_6_8; pair];
+    elseif isequal(regions, [7, 8]), comb_7_8 = [comb_7_8; pair];
+    end
 end
-%}
 
+fprintf('  ✓ Sorted into region combinations\n');
+
+%% Step 4: Add dummy point for colormap scaling
+fprintf('\n[4/4] Adding colormap scaling point...\n');
 
 limits = zeros(1, 26); 
 limits(22) = 1.2;
 
-comb_4  = [comb_4; limits];
-comb_5  = [comb_5; limits];
-comb_6  = [comb_6; limits];
-comb_7  = [comb_7; limits];
-comb_10 = [comb_10; limits];
-comb_11 = [comb_11; limits];
-comb_12 = [comb_12; limits];
-comb_13 = [comb_13; limits];
-comb_15 = [comb_15; limits];
-comb_16 = [comb_16; limits];
-comb_17 = [comb_17; limits];
-comb_18 = [comb_18; limits];
-comb_19 = [comb_19; limits];
-comb_20 = [comb_20; limits];
-comb_21 = [comb_21; limits];
-comb_22 = [comb_22; limits];
-comb_24 = [comb_24; limits];
-comb_25 = [comb_25; limits];
-comb_26 = [comb_26; limits];
-comb_27 = [comb_27; limits];
-comb_28 = [comb_28; limits];
-%}
-
-% _________________________________________________________________________
-subplot(4,6,1)
-scatter(log10(comb_4(:,20)), log10(comb_4(:,21)), ...
-    300, comb_4(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-
-subplot(4,6,2)
-scatter(log10(comb_5(:,20)), log10(comb_5(:,21)), ...
-    300, comb_5(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-%}
-
-subplot(4,6,3)
-scatter(log10(comb_6(:,20)), log10(comb_6(:,21)), ...
-    300, comb_6(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-
-subplot(4,6,4)
-scatter(log10(comb_7(:,20)), log10(comb_7(:,21)), ...
-    300, comb_7(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-%}
-
-subplot(4,6,5)
-scatter(log10(comb_10(:,20)), log10(comb_10(:,21)), ...
-    300, comb_10(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-%}
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-
-subplot(4,6,6)
-scatter(log10(comb_11(:,20)), log10(comb_11(:,21)), ...
-    300, comb_11(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-%}
-
-subplot(4,6,7)
-scatter(log10(comb_12(:,20)), log10(comb_12(:,21)), ...
-    300, comb_12(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-
-subplot(4,6,8)
-scatter(log10(comb_13(:,20)), log10(comb_13(:,21)), ...
-    300, comb_13(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-%}
-
-subplot(4,6,9)
-scatter(log10(comb_15(:,20)), log10(comb_15(:,21)), ...
-    300, comb_15(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-%}
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-
-subplot(4,6,10)
-scatter(log10(comb_17(:,20)), log10(comb_17(:,21)), ...
-    300, comb_17(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-%}
-
-subplot(4,6,11)
-scatter(log10(comb_18(:,20)), log10(comb_18(:,21)), ...
-    300, comb_18(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-
-subplot(4,6, 12)
-scatter(log10(comb_19(:,20)), log10(comb_19(:,21)), ...
-    300, comb_19(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-%}
-
-subplot(4,6,13)
-scatter(log10(comb_20(:,20)), log10(comb_20(:,21)), ...
-    300, comb_20(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-
-subplot(4,6,14)
-scatter(log10(comb_21(:,20)), log10(comb_21(:,21)), ...
-    300, comb_21(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-%}
-
-subplot(4,6,15)
-scatter(log10(comb_22(:,20)), log10(comb_22(:,21)), ...
-    300, comb_22(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-
-subplot(4,6,16)
-scatter(log10(comb_24(:,20)), log10(comb_24(:,21)), ...
-    300, 0.1*ones(length(comb_24), 1), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-%}
-
-subplot(4,6,17)
-scatter(log10(comb_25(:,20)), log10(comb_25(:,21)), ...
-    300, 0.1*ones(length(comb_25), 1), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-
-subplot(4,6,18)
-scatter(log10(comb_26(:,20)), log10(comb_26(:,21)), ...
-    300, comb_26(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-
-subplot(4,6,19)
-scatter(log10(comb_27(:,20)), log10(comb_27(:,21)), ...
-    300, comb_27(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-
-subplot(4,6,20)
-scatter(log10(comb_28(:,20)), log10(comb_28(:,21)), ...
-    300, comb_28(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-
-subplot(4,6, 21)
-scatter(log10(comb_16(:,20)), log10(comb_16(:,21)), ...
-    300, comb_16(:, 22), 'filled', 'o', 'MarkerFaceAlpha', '0.8');
-caxis([0 1.5]);
-colormap autumn
-
-xticks([0 5 10])
-xticklabels({0, '10^5', '10^{10}'})
-yticks([0 5 10])
-yticklabels({0, '10^5', '10^{10}'})
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-axis([0 11 0 11])
-xlabel('\fontsize{14}SA')
-ylabel('\fontsize{14}SE')
-set(gca, 'FontSize', 14)
-%}
+comb_1_5 = [comb_1_5; limits]; comb_1_6 = [comb_1_6; limits];
+comb_1_7 = [comb_1_7; limits]; comb_1_8 = [comb_1_8; limits];
+comb_2_5 = [comb_2_5; limits]; comb_2_6 = [comb_2_6; limits];
+comb_2_7 = [comb_2_7; limits]; comb_2_8 = [comb_2_8; limits];
+comb_3_5 = [comb_3_5; limits]; comb_3_6 = [comb_3_6; limits];
+comb_3_7 = [comb_3_7; limits]; comb_3_8 = [comb_3_8; limits];
+comb_4_5 = [comb_4_5; limits]; comb_4_6 = [comb_4_6; limits];
+comb_4_7 = [comb_4_7; limits]; comb_4_8 = [comb_4_8; limits];
+comb_5_7 = [comb_5_7; limits]; comb_5_8 = [comb_5_8; limits];
+comb_6_7 = [comb_6_7; limits]; comb_6_8 = [comb_6_8; limits];
+comb_7_8 = [comb_7_8; limits];
+
+fprintf('  ✓ Ready for plotting\n');
+
+%% Step 5: Create figure with subplots
+fprintf('\nGenerating figure...\n');
+
+figure('Name', 'Virtual Skin Sites - 2 Steady States', 'Position', [100, 100, 1400, 900]);
+
+% Plot the most common combinations (21 subplots)
+subplot(4, 6, 1);  plot_2state_combination(comb_1_5, 'Regions 1-5');
+subplot(4, 6, 2);  plot_2state_combination(comb_1_6, 'Regions 1-6');
+subplot(4, 6, 3);  plot_2state_combination(comb_1_7, 'Regions 1-7');
+subplot(4, 6, 4);  plot_2state_combination(comb_1_8, 'Regions 1-8');
+subplot(4, 6, 5);  plot_2state_combination(comb_2_5, 'Regions 2-5');
+subplot(4, 6, 6);  plot_2state_combination(comb_2_6, 'Regions 2-6');
+subplot(4, 6, 7);  plot_2state_combination(comb_2_7, 'Regions 2-7');
+subplot(4, 6, 8);  plot_2state_combination(comb_2_8, 'Regions 2-8');
+subplot(4, 6, 9);  plot_2state_combination(comb_3_5, 'Regions 3-5');
+subplot(4, 6, 10); plot_2state_combination(comb_3_7, 'Regions 3-7');
+subplot(4, 6, 11); plot_2state_combination(comb_3_8, 'Regions 3-8');
+subplot(4, 6, 12); plot_2state_combination(comb_4_5, 'Regions 4-5');
+subplot(4, 6, 13); plot_2state_combination(comb_4_6, 'Regions 4-6');
+subplot(4, 6, 14); plot_2state_combination(comb_4_7, 'Regions 4-7');
+subplot(4, 6, 15); plot_2state_combination(comb_4_8, 'Regions 4-8');
+subplot(4, 6, 16); plot_2state_combination(comb_5_7, 'Regions 5-7');
+subplot(4, 6, 17); plot_2state_combination(comb_5_8, 'Regions 5-8');
+subplot(4, 6, 18); plot_2state_combination(comb_6_7, 'Regions 6-7');
+subplot(4, 6, 19); plot_2state_combination(comb_6_8, 'Regions 6-8');
+subplot(4, 6, 20); plot_2state_combination(comb_7_8, 'Regions 7-8');
+subplot(4, 6, 21); plot_2state_combination(comb_3_6, 'Regions 3-6');
+
+sgtitle('Virtual Skin Sites with 2 Steady States', 'FontSize', 16, 'FontWeight', 'bold');
+
+% Save figure as PNG
+output_file = 'PatientTypes_2_SteadyStates.png';
+print(output_file, '-dpng', '-r300');
+fprintf('✓ Figure saved as: %s\n', output_file);
+
+fprintf('✓ Figure complete!\n\n');
+
+%% Helper function for plotting
+function plot_2state_combination(data, label)
+    % Plot a single combination subplot
+    
+    if size(data, 1) <= 1
+        % Empty or only dummy point
+        text(0.5, 0.5, 'No data', 'HorizontalAlignment', 'center', ...
+            'FontSize', 12, 'Units', 'normalized');
+        axis([0 11 0 11]);
+        set(gca, 'FontSize', 14);
+        title(sprintf('%s\nn=0', label));
+        return;
+    end
+    
+    % Count actual patients (exclude dummy point, 2 rows per patient)
+    n_patients = (size(data, 1) - 1) / 2;
+    
+    % Create scatter plot
+    scatter(log10(data(:, 20)), log10(data(:, 21)), ...
+        300, data(:, 22), 'filled', 'o', 'MarkerFaceAlpha', 0.8);
+    
+    % Colormap setup
+    caxis([0 1.5]);
+    colormap autumn;
+    
+    % Axis formatting
+    xticks([0 5 10]);
+    xticklabels({'0', '10^5', '10^{10}'});
+    yticks([0 5 10]);
+    yticklabels({'0', '10^5', '10^{10}'});
+    
+    ax = gca;
+    ax.TickLength = [0.05, 0.05];
+    ax.LineWidth = 0.75;
+    
+    axis([0 11 0 11]);
+    xlabel('SA', 'FontSize', 14);
+    ylabel('SE', 'FontSize', 14);
+    set(gca, 'FontSize', 14);
+    
+    title(sprintf('%s\nn=%d', label, n_patients));
+end
