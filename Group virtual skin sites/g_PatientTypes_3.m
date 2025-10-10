@@ -3,26 +3,36 @@
 % Purpose: Plot virtual skin sites with THREE stable steady states
 %          Groups by ALL region combinations found in data
 %
-% Inputs:  AllVirtualPatientTypes (workspace) or Three_StableState.csv
-% Outputs: Figure with subplots showing ALL 3-state combinations
-%          Saved as PatientTypes_3_SteadyStates.png
+% Inputs:  AllVirtualPatientTypes (workspace) or Three_StableStates.csv
+% Outputs: data/Three_StableStates.csv, figures/PatientTypes_3_SteadyStates.png
 %
 % Note: Dynamically detects all unique 3-region combinations in the data.
 %       The number of subplots will vary depending on your dataset.
 %
 % Author: Jamie Lee
 % Date: 7 October 2025
-% Version: 2.1 - Now plots ALL combinations (not just common ones)
+% Version: 2.2 - Added organized output folders
 
 clc;
 
 fprintf('=== Plotting Patients with 3 Steady States ===\n\n');
 
+%% Step 0: Create output folders if they don't exist
+if ~exist('data', 'dir')
+    mkdir('data');
+    fprintf('Created data/ folder\n');
+end
+if ~exist('figures', 'dir')
+    mkdir('figures');
+    fprintf('Created figures/ folder\n');
+end
+
 %% Step 1: Load or filter data for 3-state patients
 fprintf('[1/4] Loading data for 3-state patients...\n');
 
-% Define data file path (relative to Group virtual skin sites folder)
-data_file = '../Analyse steady states/data/AllVirtualPatientTypes_latest.csv';
+% Define data file paths
+main_data_file = '../Analyse steady states/data/AllVirtualPatientTypes_latest.csv';
+local_csv = 'data/Three_StableStates.csv';
 
 % Option 1: Filter from workspace variable
 if exist('AllVirtualPatientTypes', 'var')
@@ -33,33 +43,33 @@ if exist('AllVirtualPatientTypes', 'var')
             PatientsThree = [PatientsThree; AllVirtualPatientTypes(i, :)];
         end 
     end
-    writematrix(PatientsThree, 'Three_StableState.csv');
-    fprintf('  ✓ Saved Three_StableState.csv\n');
+    writematrix(PatientsThree, local_csv);
+    fprintf('  ✓ Saved %s\n', local_csv);
     
 % Option 2: Load from filtered file
-elseif exist('Three_StableState.csv', 'file')
-    fprintf('  Loading from Three_StableState.csv\n');
-    PatientsThree = readmatrix('Three_StableState.csv');
+elseif exist(local_csv, 'file')
+    fprintf('  Loading from %s\n', local_csv);
+    PatientsThree = readmatrix(local_csv);
     fprintf('  ✓ Loaded\n');
     
 % Option 3: Load and filter from main data file
-elseif exist(data_file, 'file')
-    fprintf('  Loading and filtering from %s\n', data_file);
-    AllVirtualPatientTypes = readmatrix(data_file);
+elseif exist(main_data_file, 'file')
+    fprintf('  Loading and filtering from %s\n', main_data_file);
+    AllVirtualPatientTypes = readmatrix(main_data_file);
     PatientsThree = [];
     for i = 1:size(AllVirtualPatientTypes, 1)
         if AllVirtualPatientTypes(i, 2) == 3
             PatientsThree = [PatientsThree; AllVirtualPatientTypes(i, :)];
         end 
     end
-    writematrix(PatientsThree, 'Three_StableState.csv');
-    fprintf('  ✓ Filtered and saved Three_StableState.csv\n');
+    writematrix(PatientsThree, local_csv);
+    fprintf('  ✓ Filtered and saved %s\n', local_csv);
     
 else
     error(['No data found. Need one of:\n' ...
            '  1. AllVirtualPatientTypes variable in workspace\n' ...
-           '  2. Three_StableState.csv file in current directory\n' ...
-           '  3. %s file'], data_file);
+           '  2. %s file\n' ...
+           '  3. %s file'], local_csv, main_data_file);
 end
 
 fprintf('  Total: %d patients with 3 steady states\n', size(PatientsThree, 1) / 3);
@@ -183,12 +193,12 @@ end
 
 sgtitle('Virtual Skin Sites with 3 Steady States (All Combinations)', 'FontSize', 16, 'FontWeight', 'bold');
 
-% Save figure as PNG
-output_file = 'PatientTypes_3_SteadyStates.png';
+% Save figure as PNG to figures/ folder
+output_file = 'figures/PatientTypes_3_SteadyStates.png';
 print(output_file, '-dpng', '-r300');
 fprintf('✓ Figure saved as: %s\n', output_file);
 
-fprintf('✓ Figure complete with %d unique combinations!\n\n', n_combos);
+fprintf('✓ Complete with %d unique combinations!\n\n', n_combos);
 
 %% Helper function for plotting
 function plot_3state_combination(data, label)
