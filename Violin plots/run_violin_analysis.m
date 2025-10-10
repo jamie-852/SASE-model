@@ -54,15 +54,15 @@ function run_violin_analysis(mode, regenerate_csv)
     %% Step 1: Check for/Generate CSV files
     fprintf('Step 1: Checking for classification CSV files...\n');
     
-    files_exist = exist('asymp.csv', 'file') && ...
-                  exist('reversible.csv', 'file') && ...
-                  exist('irreversible.csv', 'file');
+    files_exist = exist('../Analyse steady states/data/asymp.csv', 'file') && ...
+                  exist('../Analyse steady states/data/reversible.csv', 'file') && ...
+                  exist('../Analyse steady states/data/irreversible.csv', 'file');
     
     % Determine if we should regenerate CSVs
     if ~files_exist
         % Files don't exist - must generate
         fprintf('  CSV files not found. Generating them now...\n\n');
-        generate_classification_csvs();
+        run('../Analyse steady states/g_classification_csvs.m');
         
     elseif isempty(regenerate_csv)
         % Interactive mode - ask user
@@ -70,14 +70,14 @@ function run_violin_analysis(mode, regenerate_csv)
         response = input('  Regenerate CSV files? (y/n): ', 's');
         if strcmpi(response, 'y')
             fprintf('\n');
-            generate_classification_csvs();
+            run('../Analyse steady states/g_classification_csvs.m');
         end
         
     elseif regenerate_csv
         % Batch mode - regenerate requested
         fprintf('  ✓ CSV files found\n');
         fprintf('  Regenerating CSV files (as requested)...\n\n');
-        generate_classification_csvs();
+        run('../Analyse steady states/g_classification_csvs.m');
         
     else
         % Batch mode - use existing files
@@ -117,16 +117,16 @@ function run_violin_analysis(mode, regenerate_csv)
     %% Step 3: Generate plots
     switch mode
         case 'all'
-            plot_violin_parameters('all');
+            g_violin_plot('all');
         case 'SE_damaging'
-            plot_violin_parameters('SE_damaging');
+            g_violin_plot('SE_damaging');
         case 'SE_nondamaging'
-            plot_violin_parameters('SE_nondamaging');
+            g_violin_plot('SE_nondamaging');
         case 'generate_all'
             fprintf('Generating all three versions...\n\n');
-            plot_violin_parameters('all');
-            plot_violin_parameters('SE_damaging');
-            plot_violin_parameters('SE_nondamaging');
+            g_violin_plot('all');
+            g_violin_plot('SE_damaging');
+            g_violin_plot('SE_nondamaging');
         otherwise
             error('Invalid mode: %s. Use: all, SE_damaging, SE_nondamaging, or generate_all', mode);
     end
