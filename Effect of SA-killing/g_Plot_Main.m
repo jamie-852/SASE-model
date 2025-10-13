@@ -1,4 +1,4 @@
-% g_Plot.m
+% g_Plot_Main.m
 %
 % Purpose: Generate treatment response heatmaps (Figure 3)
 %          Creates 3 plots: All sites, Reversible only, Irreversible only

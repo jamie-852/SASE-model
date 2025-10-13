@@ -31,6 +31,7 @@ This repository contains the code for reproducing the results from: "In Silico E
 **Software Requirements:**
 - MATLAB R2021b or later
 - Statistics and Machine Learning Toolbox (for violin plots)
+- Parallel Computing Toolbox
 
 **Hardware Recommendations:**
 - **RAM**: 4 GB minimum, 16 GB recommended for full workflow
@@ -68,13 +69,11 @@ run run_SteadyStates.m
 
 #### Step 2: Visualise Steady State Subtypes → Figure 2, Supplementary Figure S1
 ```matlab
-% Navigate to visualization folder
+% Navigate to sub-type visualisation folder
 cd '../Group virtual skin sites'
 
 % Generate steady state subtype plots
-run g_PatientTypes_1  % sites with 1 steady state
-run g_PatientTypes_2  % sites with 2 steady states
-run g_PatientTypes_3  % sites with 3 steady states
+run run_patient_types.m
 ```
 
 **Outputs**: Phase portraits showing SA (x-axis) vs SE (y-axis) populations at steady state, colored by barrier integrity (yellow for B* = 1, red for B* < 1)
@@ -94,10 +93,32 @@ run g_PatientTypes_3  % sites with 3 steady states
 % Navigate to SA-killing treatment folder
 cd '../Effect of SA-killing'
 
-% [TO BE DOCUMENTED - Treatment analysis with varying SA-killing strength and duration]
+% Explore effect of SA-killing treatment
+run run_main.m % generates Figure 3b - d in main text
+run run_supplementary.m % generates Figure S2 in supplementary materials
+run run_example_site.m % generates Figure S3 in supplementary materials 
 ```
-**Status**: ⚠️ Not fully documented yet  
-**Figures**: Figure 3, Supplementary Figures S2-S3
+
+**Outputs**:
+
+**Treatment strength varied between X-Y days^[-1] and X-Y days**
+- `Fig3_AllSites.png` - Treatment response for all virtual skin sites with damaged skin state
+- `Fig3_Irreversible.png` - Treatment response for irreversible sites
+- `Fig3_Reversible.png` - Treatment response for reversible sites
+
+**Treatment strength varied between X-Y days and X-Y days**
+- `FigS2_AllSites.png` - Treatment response for all virtual skin sites with damaged skin state
+- `FigS2_Irreversible.png` - Treatment response for irreversible sites
+- `FigS2_Reversible.png` - Treatment response for reversible sites
+
+**Treatment response for one example virtual skin site**
+- `ExampleSite_PhasePortrait.png` - SA and SE population sizes for one example virtual skin site
+- `ExampleSite_TreatmentResponse.png` - Treatment response for one example virtual skin site
+
+**Figures**:
+- **Figure 3b - d**: `Fig3_AllSites.png`, `Fig3_Irreversible.png`, and `Fig3_Reversible.png`
+- **Supplementary Figure S2**: `FigS2_AllSites.png`, `FigS2_Irreversible.png`, and `FigS2_Reversible.png`
+- **Supplementary Figure S3**: `ExampleSite_PhasePortrait.png` and `ExampleSite_TreatmentResponse.png`
 
 ---
 
@@ -129,10 +150,22 @@ run run_violin_analysis('generate_all', true)
 % Navigate to dual-action treatment folder
 cd '../Effect of dual-action treatment'
 
-% [TO BE DOCUMENTED - Treatment strategy enhancing SA and SE growth attenuation]
+% Explore effect of dual-action treatment
+run run_DualAction.m
+run run_Supplementary_a.m
+run run_Supplementary_b-d.m
 ```
-**Status**: ⚠️ Not fully documented yet  
-**Figures**: Figure 5, Supplementary Figure S6
+
+**Outputs**:
+- `ViolinPlots_all.png` - All virtual skin sites
+- `ViolinPlots_damage.png` - Only sites with skin-damaging SE strains (δ<sub>BE</sub> > 0)
+- `ViolinPlots_no_damage.png` - Only sites without skin-damaging SE strains (δ<sub>BE</sub> = 0)
+
+**Figures**:
+- **Figure 4a**: Highlights 6 key parameters from `ViolinPlots_all.png` (subset of parameters selected by visual inspection)
+- **Supplementary Figure S4**: Complete parameter distributions from `ViolinPlots_all.png`
+- **Supplementary Figure S5a**: Parameter distributions for damaging SE strains (from `ViolinPlots_damage.png`)
+- **Supplementary Figure S5b**: Parameter distributions for non-damaging SE strains (from `ViolinPlots_no_damage.png`)
 
 ---
 

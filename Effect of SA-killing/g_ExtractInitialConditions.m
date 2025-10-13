@@ -7,42 +7,79 @@
 %   1. Regions 7/8/9 (SA-driven damage) - pick state with smallest B*
 %   2. Regions 5/6 (SE-driven damage) - pick state with smallest B*
 %
-% Inputs:  ../Analyse steady states/data/reversible.csv and irreversible.csv
-% Outputs: data/reversible_SAkilling.csv and irreversible_SAkilling.csv
+% DEFAULT USAGE (for regular SA-killing workflow):
+%   g_ExtractInitialConditions()
+%   Inputs:  ../Analyse steady states/data/reversible.csv and irreversible.csv
+%   Outputs: data/reversible_SAkilling.csv and irreversible_SAkilling.csv
+%
+% CUSTOM USAGE (for dual-action workflow):
+%   g_ExtractInitialConditions(input_folder, output_folder, file_suffix)
+%   Example: g_ExtractInitialConditions('../Effect of dual-action treatment/data', ...
+%                                       '../Effect of dual-action treatment/data', ...
+%                                       'attenuation_reversible_20x.csv', ...
+%                                       'attenuation_irreversible_20x.csv', ...
+%                                       'dual_action_reversible_20x_initial.csv', ...
+%                                       'dual_action_irreversible_20x_initial.csv')
 %
 % Author: Jamie Lee
-% Date: 10 October 2025
+% Date: 13 October 2025
+% Version: 3.0 - Made flexible for dual-action workflow
 
-function g_ExtractInitialConditions()
+function g_ExtractInitialConditions(input_folder, output_folder, ...
+                                     reversible_input_name, irreversible_input_name, ...
+                                     reversible_output_name, irreversible_output_name)
     
     clc;
     fprintf('=== Extracting Initial Conditions for SA-Killing Simulations ===\n\n');
     
-    %% Setup paths
-    % Input files from Analyse steady states/data/
-    input_folder = '../Analyse steady states/data';
-    reversible_file = fullfile(input_folder, 'reversible.csv');
-    irreversible_file = fullfile(input_folder, 'irreversible.csv');
+    %% Handle default parameters (regular workflow)
+    if nargin == 0
+        % Default: regular SA-killing workflow
+        input_folder = '../Analyse steady states/data';
+        output_folder = 'data';
+        reversible_input_name = 'reversible.csv';
+        irreversible_input_name = 'irreversible.csv';
+        reversible_output_name = 'reversible_SAkilling.csv';
+        irreversible_output_name = 'irreversible_SAkilling.csv';
+        
+        fprintf('Mode: Regular SA-killing workflow\n');
+    else
+        fprintf('Mode: Custom input/output paths\n');
+    end
     
-    % Output files to local data/ folder
-    output_folder = 'data';
-    reversible_output = fullfile(output_folder, 'reversible_SAkilling.csv');
-    irreversible_output = fullfile(output_folder, 'irreversible_SAkilling.csv');
+    fprintf('Input folder: %s\n', input_folder);
+    fprintf('Output folder: %s\n\n', output_folder);
+    
+    %% Setup full paths
+    reversible_file = fullfile(input_folder, reversible_input_name);
+    irreversible_file = fullfile(input_folder, irreversible_input_name);
+    reversible_output = fullfile(output_folder, reversible_output_name);
+    irreversible_output = fullfile(output_folder, irreversible_output_name);
     
     %% Check if input files exist
     if ~exist(reversible_file, 'file')
-        error('Cannot find %s\nPlease run g_ClassificationFiles.m first', reversible_file);
+        error('Cannot find %s\nPlease check input paths', reversible_file);
     end
     if ~exist(irreversible_file, 'file')
-        error('Cannot find %s\nPlease run g_ClassificationFiles.m first', irreversible_file);
+        error('Cannot find %s\nPlease check input paths', irreversible_file);
     end
     
     %% Process reversible patients
     fprintf('[1/2] Processing reversible patients...\n');
+    fprintf('  Input: %s\n', reversible_file);
     reversible_data = readmatrix(reversible_file);
-    reversible_initial = extract_worst_case_states(reversible_data);
     
-    % Create output folder (mkdir won't error if it already exists)
+    % Filter for damaged states only (B* < 1) if needed
+    reversible_damaged = reversible_data(reversible_data(:, 22) < 1, :);
+    
+    if isempty(reversible_damaged)
+        fprintf('  ⚠️  No damaged states found (all have B* = 1)\n');
+        reversible_initial = [];
+    else
+        reversible_initial = extract_worst_case_states(reversible_damaged);
+    end
+    
+    % Create output folder
     mkdir(output_folder);
     
     writematrix(reversible_initial, reversible_output);
@@ -50,11 +87,18 @@ function g_ExtractInitialConditions()
     
     %% Process irreversible patients
     fprintf('\n[2/2] Processing irreversible patients...\n');
+    fprintf('  Input: %s\n', irreversible_file);
     irreversible_data = readmatrix(irreversible_file);
-    irreversible_initial = extract_worst_case_states(irreversible_data);
     
-    % Create output folder (mkdir won't error if it already exists)
-    mkdir(output_folder);
+    % Filter for damaged states only (B* < 1) if needed
+    irreversible_damaged = irreversible_data(irreversible_data(:, 22) < 1, :);
+    
+    if isempty(irreversible_damaged)
+        fprintf('  ⚠️  No damaged states found (all have B* = 1)\n');
+        irreversible_initial = [];
+    else
+        irreversible_initial = extract_worst_case_states(irreversible_damaged);
+    end
     
     writematrix(irreversible_initial, irreversible_output);
     fprintf('  ✓ Saved %s (%d patients)\n', irreversible_output, size(irreversible_initial, 1));

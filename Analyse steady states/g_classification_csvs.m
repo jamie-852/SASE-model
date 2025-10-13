@@ -21,7 +21,7 @@ fprintf('=== Generating Classification CSV Files ===\n\n');
 %% Step 1: Load data
 fprintf('[1/3] Loading data...\n');
 
-data_file = '../Analyse steady states/data/AllVirtualPatientTypes_latest.csv';
+data_file = 'data/AllVirtualPatientTypes_latest.csv';
 
 if exist('AllVirtualPatientTypes', 'var')
     fprintf('  Using AllVirtualPatientTypes from workspace\n');
