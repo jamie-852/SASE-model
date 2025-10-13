@@ -1,4 +1,4 @@
-% main_analyse_steady_states.m
+% run_SteadyStates.m
 %
 % Main runner script for steady state analysis pipeline
 % 
@@ -8,7 +8,7 @@
 %
 % USAGE:
 %   1. Modify the CONFIGURATION section below to set your parameters
-%   2. Run this script: matlab -batch "run('main_analyse_steady_states.m')"
+%   2. Run this script: matlab -batch "run('run_SteadyStates.m')"
 %   3. Results will be saved in data/ folder
 %
 % OUTPUTS:
@@ -19,7 +19,7 @@
 %
 % Author: Jamie Lee
 % Date: 6 October 2025
-% Version: 2.1 - Added step 5 to generate classification CSV files
+% Version: 2.2 - Removed figures_folder (no figures produced)
 
 clc;
 clear all;
@@ -158,7 +158,7 @@ fprintf('╚══════════════════════�
 
 step_start = tic;
 
-% Call g_classification_csvs.m to create asymp.csv, reversible.csv, irreversible.csv
+% Call g_ClassificationFiles.m to create asymp.csv, reversible.csv, irreversible.csv
 generate_classification_csvs(config);
 
 fprintf('\n✓ Step 5 complete (%.1f seconds)\n\n', toc(step_start));
@@ -195,7 +195,7 @@ fprintf('  - Column 2:     Number of stable states\n');
 fprintf('  - Columns 3-19:  Parameters (17 parameters)\n');
 fprintf('  - Columns 20-22: Steady states (A*, E*, B*)\n');
 fprintf('  - Columns 23-25: Eigenvalues (λ1, λ2, λ3)\n');
-fprintf('  - Column 26:    Category (1-9)\n');
+fprintf('  - Column 26:    Region (1-9)\n');
 fprintf('\n');
 
 if config.save_intermediate_files
@@ -205,7 +205,7 @@ if config.save_intermediate_files
     fprintf('  → %s/AllVirtualPatients_latest.csv (25 cols)\n', config.data_folder);
     fprintf('\n');
     fprintf('═══ Classification Files ═══\n');
-    fprintf('  → %s/asymp.csv (patient classification files)\n', config.data_folder);
+    fprintf('  → %s/asymp.csv\n', config.data_folder);
     fprintf('  → %s/reversible.csv\n', config.data_folder);
     fprintf('  → %s/irreversible.csv\n', config.data_folder);
     fprintf('\n');
@@ -213,18 +213,22 @@ end
 
 fprintf('═══ Next Steps ═══\n');
 fprintf('The primary output file and classification CSVs are ready for downstream analysis:\n\n');
-fprintf('  1. Generate violin plots\n');
-fprintf('     → Classification files (asymp.csv, reversible.csv, irreversible.csv) are ready in %s/\n', config.data_folder);
-fprintf('     → Run violin plot scripts directly\n');
+fprintf('  1. Visualize steady state subtypes\n');
+fprintf('     → cd ../''Group virtual skin sites''\n');
+fprintf('     → run g_PatientTypes_1; run g_PatientTypes_2; run g_PatientTypes_3\n');
 fprintf('\n');
-fprintf('  2. Analyze SA-killing effects\n');
-fprintf('     → Use AllVirtualPatientTypes_latest.csv as input\n');
+fprintf('  2. Generate violin plots\n');
+fprintf('     → cd ../''Violin plots''\n');
+fprintf('     → run run_violin_analysis(''generate_all'', true)\n');
 fprintf('\n');
-fprintf('  3. Analyze dual-action treatment\n');
-fprintf('     → Use AllVirtualPatientTypes_latest.csv as input\n');
+fprintf('  3. Analyze SA-killing treatment effects\n');
+fprintf('     → cd ../''Effect of SA-killing''\n');
+fprintf('     → run g_ExtractInitialConditions\n');
+fprintf('     → run g_TreatmentResponse\n');
+fprintf('     → run g_Plot\n');
 fprintf('\n');
 fprintf('  4. Perform custom analyses\n');
-fprintf('     → Load AllVirtualPatientTypes_latest.csv and filter by categories\n');
+fprintf('     → Load AllVirtualPatientTypes_latest.csv and filter by region\n');
 fprintf('\n');
 
 fprintf('╔════════════════════════════════════════════════════════╗\n');
@@ -245,7 +249,6 @@ function generate_parameter_samples(config)
     % Set workspace variables that g_samples.m will use
     assignin('base', 'n_samples', config.n_samples);
     assignin('base', 'data_folder', config.data_folder);
-    assignin('base', 'figures_folder', config.figures_folder);
     assignin('base', 'date_str', config.date_str);
     assignin('base', 'rng_initialized', true);  % Flag to prevent re-initialization
     
@@ -263,7 +266,6 @@ function compute_steady_states(config)
     % Set workspace variables
     assignin('base', 'n_samples', config.n_samples);
     assignin('base', 'data_folder', config.data_folder);
-    assignin('base', 'figures_folder', config.figures_folder);
     assignin('base', 'date_str', config.date_str);
     
     evalin('base', 'run(''a_SampledParameters.m'')');
@@ -277,7 +279,6 @@ function assign_patient_ids(config)
     
     % Set workspace variables
     assignin('base', 'data_folder', config.data_folder);
-    assignin('base', 'figures_folder', config.figures_folder);
     assignin('base', 'date_str', config.date_str);
     
     evalin('base', 'run(''g_VirtualPatients.m'')');
@@ -291,21 +292,20 @@ function classify_patient_groups(config)
     
     % Set workspace variables
     assignin('base', 'data_folder', config.data_folder);
-    assignin('base', 'figures_folder', config.figures_folder);
     assignin('base', 'date_str', config.date_str);
     
     evalin('base', 'run(''a_PatientGroups.m'')');
 end
 
 function generate_classification_csvs(config)
-    % Wrapper for g_classification_csvs.m
+    % Wrapper for g_ClassificationFiles.m
     
     fprintf('Generating classification CSV files...\n');
     fprintf('Creating: asymp.csv, reversible.csv, irreversible.csv\n');
-    fprintf('(This calls g_classification_csvs.m)\n\n');
+    fprintf('(This calls g_ClassificationFiles.m)\n\n');
     
     % Run the classification script directly since it's in the same directory
-    evalin('base', 'run(''g_classification_csvs.m'')');
+    evalin('base', 'run(''g_ClassificationFiles.m'')');
     
     fprintf('  ✓ CSV files saved to: %s/\n', fullfile(pwd, config.data_folder));
 end
