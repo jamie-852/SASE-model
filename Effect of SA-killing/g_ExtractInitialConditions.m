@@ -42,11 +42,8 @@ function g_ExtractInitialConditions()
     reversible_data = readmatrix(reversible_file);
     reversible_initial = extract_worst_case_states(reversible_data);
     
-    % Ensure output folder exists before writing
-    if ~exist(output_folder, 'dir')
-        mkdir(output_folder);
-        fprintf('  Created %s/ folder\n', output_folder);
-    end
+    % Create output folder (mkdir won't error if it already exists)
+    mkdir(output_folder);
     
     writematrix(reversible_initial, reversible_output);
     fprintf('  ✓ Saved %s (%d patients)\n', reversible_output, size(reversible_initial, 1));
@@ -56,11 +53,8 @@ function g_ExtractInitialConditions()
     irreversible_data = readmatrix(irreversible_file);
     irreversible_initial = extract_worst_case_states(irreversible_data);
     
-    % Ensure output folder exists before writing
-    if ~exist(output_folder, 'dir')
-        mkdir(output_folder);
-        fprintf('  Created %s/ folder\n', output_folder);
-    end
+    % Create output folder (mkdir won't error if it already exists)
+    mkdir(output_folder);
     
     writematrix(irreversible_initial, irreversible_output);
     fprintf('  ✓ Saved %s (%d patients)\n', irreversible_output, size(irreversible_initial, 1));

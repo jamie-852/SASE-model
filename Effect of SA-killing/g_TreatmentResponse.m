@@ -1,186 +1,258 @@
-clc 
-clear all
+% g_TreatmentResponse.m
+%
+% Purpose: Simulate SA-killing treatment response for reversible skin sites
+%          Tests combinations of treatment strength and duration
+%
+% Inputs:  data/reversible_SAkilling.csv (initial conditions)
+% Outputs: data/reversible_treatment_results.csv
+%
+% Usage:
+%   g_TreatmentResponse()                    % Default: strength 0-5, duration 1-4
+%   g_TreatmentResponse(0, 1, 5, 1, 0.5, 4)  % Custom ranges (main text)
+%   g_TreatmentResponse(0, 2.5, 10, 2, 12, 50) % Supplementary Figure ranges
+%
+% Author: Jamie Lee
+% Date: 10 October 2025
+% Version: 2.0 - Refactored for reproducibility
 
-options = odeset('NonNegative', 1, 'RelTol', 1e-4, 'AbsTol', 1e-4);
-
-%% GENERATE TREATMENT COMBINATIONS
-%delta_AS = therapy strength
-delta_AS_start  = 0;
-delta_AS_step   = 1;
-delta_AS_end    = 5;
-
-% t_end = treatment length
-t_end_start  = 1;
-t_end_step   = 0.5;
-t_end_end    = 4;
-
-treatment = zeros(1, 2);
-c = 1;
-for i = delta_AS_start:delta_AS_step:delta_AS_end
-    for j = t_end_start:t_end_step:t_end_end
-        treatment(c, 1) = i;
-        treatment(c, 2) = j;
-        c = c + 1;
-    end 
-end
-
-% as a sanity check for whether the code is doing what we'd expect 
-error = [];
-
-% input example patients (irrev_SAkilling.csv or rev_SAkilling.csv)
-% irrev_SAkilling.csv includes all irreversible infection sites in Figure S1
-% rev_SAkilling.csv includes all reversible infection sites in Figure S1
-sites = readmatrix('rev_SAkilling.csv');
-
-frac_success = [];
-
-% therapy is applied when S = 1;
-S = 1;
-
-for i = 1:length(treatment)
-    % success
-    h = 0;
-
-    parfor ii = 1:length(sites)
-        % input parameters
-        kappa_A         = sites(ii, 3);
-        A_max           = sites(ii, 4); 
+function g_TreatmentResponse(delta_AS_start, delta_AS_step, delta_AS_end, ...
+                              t_end_start, t_end_step, t_end_end)
+    
+    clc;
+    fprintf('=== SA-Killing Treatment Response Analysis ===\n\n');
+    
+    %% Default parameters (Figure 3b-d: main text)
+    if nargin < 6
+        delta_AS_start  = 0;    % Treatment strength start
+        delta_AS_step   = 1;    % Treatment strength step
+        delta_AS_end    = 5;    % Treatment strength end
         
-        gamma_AB        = sites(ii, 5);
-        delta_AE        = sites(ii, 6);
-        A_th            = sites(ii, 7); 
-        E_pth           = sites(ii, 8); 
-        gamma_AE        = sites(ii, 9); 
-        
-        kappa_E         = sites(ii, 10);
-        E_max           = sites(ii, 11); 
-        gamma_EB        = sites(ii, 12);
-        delta_EA        = sites(ii, 13);
-        E_th            = sites(ii, 14); 
-        A_pth           = sites(ii, 15); 
-        
-        kappa_B         = sites(ii, 16);
-        delta_B         = sites(ii, 17); 
-        delta_BA        = sites(ii, 18); 
-        delta_BE        = sites(ii, 19);
-        
-        A_0             = sites(ii, 20);
-        E_0             = sites(ii, 21);
-        B_0             = sites(ii, 22);
-
-        if A_0 <= 1 
-            A_0 = 0;
+        t_end_start     = 1;    % Treatment duration start (days)
+        t_end_step      = 0.5;  % Treatment duration step
+        t_end_end       = 4;    % Treatment duration end (days)
+    end
+    
+    fprintf('Treatment parameter ranges:\n');
+    fprintf('  Strength: %.1f to %.1f (step %.1f)\n', delta_AS_start, delta_AS_end, delta_AS_step);
+    fprintf('  Duration: %.1f to %.1f days (step %.1f)\n\n', t_end_start, t_end_end, t_end_step);
+    
+    %% Setup paths
+    input_file = 'data/reversible_SAkilling.csv';
+    output_folder = 'data';
+    output_file = fullfile(output_folder, 'reversible_treatment_results.csv');
+    
+    % Ensure output folder exists
+    if ~exist(output_folder, 'dir')
+        mkdir(output_folder);
+    end
+    
+    %% Check input file exists
+    if ~exist(input_file, 'file')
+        error('Cannot find %s\nPlease run g_ExtractInitialConditions.m first', input_file);
+    end
+    
+    %% Load reversible patient data
+    fprintf('Loading reversible patient data...\n');
+    sites = readmatrix(input_file);
+    n_sites = size(sites, 1);
+    fprintf('  ✓ Loaded %d reversible skin sites\n\n', n_sites);
+    
+    %% Generate treatment combinations
+    fprintf('Generating treatment combinations...\n');
+    treatment = [];
+    for strength = delta_AS_start:delta_AS_step:delta_AS_end
+        for duration = t_end_start:t_end_step:t_end_end
+            treatment = [treatment; strength, duration];
         end 
-
-        if E_0 <= 1 
-            E_0 = 0; 
-        end
+    end
+    n_treatments = size(treatment, 1);
+    fprintf('  ✓ %d treatment combinations to test\n\n', n_treatments);
+    
+    %% ODE solver options
+    options = odeset('NonNegative', 1, 'RelTol', 1e-4, 'AbsTol', 1e-4);
+    options_event = odeset('NonNegative', 1, 'Events', @(t, y)f_EventHealthy(t, y), ...
+                           'RelTol', 1e-4, 'AbsTol', 1e-4);
+    
+    %% Test for parallel processing availability
+    use_parallel = check_parallel_available();
+    if use_parallel
+        fprintf('Using parallel processing\n');
+    else
+        fprintf('Parallel processing not available, using sequential processing\n');
+    end
+    fprintf('Estimated runtime: %s\n\n', estimate_runtime(n_treatments, n_sites, use_parallel));
+    
+    %% Main treatment simulation loop
+    fprintf('Running treatment simulations...\n');
+    fprintf('Progress: [');
+    
+    frac_success = zeros(n_treatments, 1);
+    S = 1;  % Therapy applied when S = 1
+    
+    % Track timing for better estimate
+    tic;
+    first_complete = false;
+    
+    for i = 1:n_treatments
+        % Count successful treatments
+        n_success = 0;
         
-        % parameter set defining one site 
-        skinsite = [kappa_A, A_max, gamma_AB, delta_AE, A_th, E_pth, gamma_AE, ...
-        kappa_E, E_max, gamma_EB, delta_EA, E_th, A_pth, kappa_B, delta_B, ...
-        delta_BA, delta_BE, A_0, E_0, B_0];
-       
-        % SA-killing application
-        [t1, y1] = ode15s(@(t, y) f_defineODEs_SAkilling(y, kappa_A, A_max, gamma_AB, delta_AE, ...
-        A_th, E_pth, gamma_AE, kappa_E, E_max, gamma_EB, delta_EA, E_th, A_pth, ...
-        kappa_B, delta_B, delta_BA, delta_BE, treatment(i, 1), S), [0, treatment(i, 2)], [A_0 E_0 B_0], options);
-
-        % extract values for A, E, and B at the end of treatment period
-        % add perturbation and simulate until healthy skin is reached (B = 1)
-        if y1(end, 1) < 1
-            y1(end, 1) = 1;
+        if use_parallel
+            parfor ii = 1:n_sites
+                if simulate_single_site(sites(ii, :), treatment(i, :), S, ...
+                                       options, options_event)
+                    n_success = n_success + 1;
+                end
+            end
         else
-            y1(end, 1) = y1(end, 1) - 1;
-        end 
-
-        if y1(end, 2) < 1
-            y1(end, 2) = 1;
-        else
-            y1(end, 2) = y1(end, 2) - 1;
-        end 
-        
-        init_nt = [(y1(end, 1)) (y1(end, 2)) y1(end, 3)];
-
-        options2 = odeset('NonNegative', 1, 'Events', @(t, y)f_EventHealthy(t, y), 'RelTol', 1e-4, 'AbsTol', 1e-4);
-
-        [t2, y2] = ode15s(@(t, y) f_defineODEs(y, kappa_A, A_max, gamma_AB, delta_AE, ...
-        A_th, E_pth, gamma_AE, kappa_E, E_max, gamma_EB, delta_EA, E_th, A_pth, ...
-        kappa_B, delta_B, delta_BA, delta_BE), [t1(end), t1(end) + 1e6], init_nt, options2);
-        
-        % if no event has occured, a healthy skin state is not reached.
-        % check to see whether code works as expected
-        if y2(end, 3) == 1 && t2(end) == (t1(end) + 1e6)
-                h = h + 1;
-                % this should always be zero as a healthy skin state is not
-                % reached. 
-                skinsite = [skinsite, y1(end, :), y2(end, :)];
-                error = [error; skinsite];
-        end
-
-        % if an event occurs, meaning that a healthy barrier integrity (B = 1) reached,
-        % check whether it is stable or not by adding a perturbation
-        if t2(end) < (t1(end) + 1e6)
-            % add pertrubation
-            if y2(end, 1) < 1
-                y2(end, 1) = 1;
-            else
-                y2(end, 1) = y2(end, 1) - 1;
-            end 
-
-            if y2(end, 2) < 1
-                y2(end, 2) = 1;
-            else
-                y2(end, 2) = y2(end, 2) - 1;
-            end 
-        
-            init_nt_2 = [y2(end, 1) y2(end, 2) y2(end, 3)];
-            
-            [t3, y3] = ode15s(@(t, y) f_defineODEs(y, kappa_A, A_max, gamma_AB, delta_AE, ...
-            A_th, E_pth, gamma_AE, kappa_E, E_max, gamma_EB, delta_EA, E_th, A_pth, ...
-            kappa_B, delta_B, delta_BA, delta_BE), [t2(end), t1(end) + 1e6], init_nt_2, options)
-
-            if y3(end, 3) == 1
-                h = h + 1;
+            for ii = 1:n_sites
+                if simulate_single_site(sites(ii, :), treatment(i, :), S, ...
+                                       options, options_event)
+                    n_success = n_success + 1;
+                end
             end
         end
+        
+        frac_success(i) = n_success / n_sites;
+        
+        % After first treatment, update time estimate
+        if ~first_complete
+            elapsed_first = toc;
+            estimated_total = elapsed_first * n_treatments;
+            fprintf('] \nUpdated estimate: %s (based on first treatment)\nProgress: [', ...
+                format_time(estimated_total));
+            first_complete = true;
+        end
+        
+        % Update progress bar
+        if first_complete && mod(i, max(1, floor(n_treatments/50))) == 0
+            fprintf('=');
+        end
     end
-
-    percent = h/(length(sites));
-    frac_success = [frac_success; percent];
+    
+    fprintf(']\n');
+    elapsed_total = toc;
+    fprintf('Actual runtime: %s\n\n', format_time(elapsed_total));
+    
+    %% Save results
+    fprintf('Saving results...\n');
+    treat_plot = [treatment, frac_success];
+    writematrix(treat_plot, output_file);
+    fprintf('  ✓ Saved: %s\n', output_file);
+    
+    %% Summary
+    fprintf('\n=== Analysis Complete ===\n');
+    fprintf('Results summary:\n');
+    fprintf('  Treatments tested: %d\n', n_treatments);
+    fprintf('  Sites per treatment: %d\n', n_sites);
+    fprintf('  Overall success rate: %.1f%% - %.1f%%\n', ...
+            min(frac_success)*100, max(frac_success)*100);
+    fprintf('\nResults saved to: %s\n', output_file);
+    fprintf('Run g_Plot.m to visualize results\n\n');
+    
 end
 
-treat_plot = [treatment, frac_success];
+%% Helper: Simulate single site treatment
+function success = simulate_single_site(site_data, treatment_params, S, options, options_event)
+    % Returns true if treatment successfully restores healthy barrier (B* = 1)
+    
+    % Extract parameters (columns 3-19)
+    kappa_A  = site_data(3);    kappa_E  = site_data(10);
+    A_max    = site_data(4);    E_max    = site_data(11);
+    gamma_AB = site_data(5);    gamma_EB = site_data(12);
+    delta_AE = site_data(6);    delta_EA = site_data(13);
+    A_th     = site_data(7);    E_th     = site_data(14);
+    E_pth    = site_data(8);    A_pth    = site_data(15);
+    gamma_AE = site_data(9);    kappa_B  = site_data(16);
+    delta_B  = site_data(17);
+    delta_BA = site_data(18);
+    delta_BE = site_data(19);
+    
+    % Extract initial conditions (columns 20-22)
+    A_0 = site_data(20);
+    E_0 = site_data(21);
+    B_0 = site_data(22);
+    
+    % Handle near-zero populations
+    if A_0 <= 1, A_0 = 0; end
+    if E_0 <= 1, E_0 = 0; end
+    
+    % Extract treatment parameters
+    delta_AS = treatment_params(1);  % Treatment strength
+    t_end = treatment_params(2);     % Treatment duration
+    
+    % Phase 1: Apply SA-killing treatment
+    [t1, y1] = ode15s(@(t, y) f_defineODEs_SAkilling(y, kappa_A, A_max, gamma_AB, ...
+        delta_AE, A_th, E_pth, gamma_AE, kappa_E, E_max, gamma_EB, delta_EA, E_th, ...
+        A_pth, kappa_B, delta_B, delta_BA, delta_BE, delta_AS, S), ...
+        [0, t_end], [A_0, E_0, B_0], options);
+    
+    % Add perturbation after treatment
+    A_pert = max(1, y1(end, 1) - 1);
+    E_pert = max(1, y1(end, 2) - 1);
+    B_post = y1(end, 3);
+    
+    % Phase 2: Check if system reaches healthy state (B* = 1)
+    [t2, y2] = ode15s(@(t, y) f_defineODEs(y, kappa_A, A_max, gamma_AB, delta_AE, ...
+        A_th, E_pth, gamma_AE, kappa_E, E_max, gamma_EB, delta_EA, E_th, A_pth, ...
+        kappa_B, delta_B, delta_BA, delta_BE), ...
+        [t1(end), t1(end) + 1e6], [A_pert, E_pert, B_post], options_event);
+    
+    % Check if healthy state reached before timeout
+    if t2(end) >= (t1(end) + 1e6)
+        success = false;
+        return;
+    end
+    
+    % Phase 3: Test stability of healthy state with perturbation
+    A_stab = max(1, y2(end, 1) - 1);
+    E_stab = max(1, y2(end, 2) - 1);
+    B_final = y2(end, 3);
+    
+    [~, y3] = ode15s(@(t, y) f_defineODEs(y, kappa_A, A_max, gamma_AB, delta_AE, ...
+        A_th, E_pth, gamma_AE, kappa_E, E_max, gamma_EB, delta_EA, E_th, A_pth, ...
+        kappa_B, delta_B, delta_BA, delta_BE), ...
+        [t2(end), t1(end) + 1e6], [A_stab, E_stab, B_final], options);
+    
+    % Success if final barrier is healthy (B* = 1)
+    success = (y3(end, 3) == 1);
+end
 
-writematrix(treat_plot, 'reversible_SAkilling_18May.csv');
-writematrix(error, 'error.csv');
+%% Helper: Check if parallel processing is available
+function available = check_parallel_available()
+    try
+        pool = gcp('nocreate');
+        if isempty(pool)
+            parpool('local', 'SpmdEnabled', false);
+        end
+        available = true;
+    catch
+        available = false;
+    end
+end
 
-% Plot heatmap of fraction of treatment success
-x = [1 4];
-y = [0 5];
+%% Helper: Estimate runtime
+function time_str = estimate_runtime(n_treatments, n_sites, use_parallel)
+    % Very rough estimate - will be updated after first treatment completes
+    total_sims = n_treatments * n_sites;
+    
+    if use_parallel
+        % Assume 4-core speedup (rough guess)
+        time_seconds = total_sims * 0.5 / 4;
+    else
+        time_seconds = total_sims * 0.5;
+    end
+    
+    time_str = sprintf('%s (rough estimate, will update)', format_time(time_seconds));
+end
 
-M = [treat_plot(1:7, 3)'; treat_plot(8:14, 3)'; treat_plot(15:21, 3)'; ...
-    treat_plot(22:28, 3)'; treat_plot(29:35, 3)'; treat_plot(36:42, 3)'];
-
-M_round = round(M*100, -1); 
-
-clims = [0 0.95];
-colormap('gray');
-imagesc(x, y, M, clims)
-colorbar;
-
-hold on
-[C, h] = contour(M_round, 'w-', 'ShowText', 'on');
-hold off
-clabel(C, h, 'FontSize', 15, 'color', 'w');
-h.LineWidth = 1;
-
-xlabel('\fontsize{16}Duration [day]')
-ylabel('\fontsize{16}Strength [day^{-1}]')
-
-ax = gca;
-ax.TickLength = [0.05, 0.05];
-ax.LineWidth = 0.75;
-
-set(gca, 'FontSize', 16)
-set(gca,'YDir','normal')
+%% Helper: Format time nicely
+function time_str = format_time(seconds)
+    if seconds < 60
+        time_str = sprintf('%.0f seconds', seconds);
+    elseif seconds < 3600
+        time_str = sprintf('%.0f minutes', seconds/60);
+    else
+        time_str = sprintf('%.1f hours', seconds/3600);
+    end
+end
