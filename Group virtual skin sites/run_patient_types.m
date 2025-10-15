@@ -150,7 +150,7 @@ fprintf('\n');
 fprintf('Each subplot displays:\n');
 fprintf('  • Horizontal axis: SA* (S. aureus population, log scale)\n');
 fprintf('  • Vertical axis: SE* (S. epidermidis population, log scale)\n');
-fprintf('  • Dot color: Barrier integrity B* (green=healthy, red=damaged)\n');
+fprintf('  • Dot color: Barrier integrity B* (yellow=undamaged, red=damaged)\n');
 fprintf('  • Title: Region combination and patient count\n');
 fprintf('\n');
 

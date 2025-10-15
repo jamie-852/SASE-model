@@ -25,7 +25,7 @@
 %
 % Usage:
 %   g_AttenuationOnly('irreversible', 20)  % 20-fold enhancement for irreversible
-%   g_AttenuationOnly('reversible', 20)    % 20-fold enhancement for reversible
+%   g_AttenuationOnly('reversible', 10)    % 10-fold enhancement for reversible
 %
 % Author: Jamie Lee
 % Date: 13 October 2025
@@ -108,25 +108,22 @@ function g_AttenuationOnly(patient_type, fold_change)
     fprintf('  Using helper functions: f_computeCase1-4.m\n');
     fprintf('  Progress: 0%%');
     
+    AllSteadyStates = [];
     ParamSet = skin_sites(:, 3:19);
-    n_param_sets = size(ParamSet, 1);
-    
-    % Pre-allocate cell array for parallel results
-    SteadyStateCell = cell(n_param_sets, 1);
     
     tic;
-    parfor i = 1:n_param_sets
+    parfor i = 1:size(ParamSet, 1)
         % Extract parameters
         kappa_A  = ParamSet(i, 1);
         A_max    = ParamSet(i, 2);
-        gamma_AB = fold_change * ParamSet(i, 3);  % Enhanced
+        gamma_AB = fold_change * ParamSet(i, 3);  % Enhanced!
         delta_AE = ParamSet(i, 4);
         A_th     = ParamSet(i, 5);
         E_pth    = ParamSet(i, 6);
         gamma_AE = ParamSet(i, 7);
         kappa_E  = ParamSet(i, 8);
         E_max    = ParamSet(i, 9);
-        gamma_EB = fold_change * ParamSet(i, 10);  % Enhanced
+        gamma_EB = fold_change * ParamSet(i, 10);  % Enhanced!
         delta_EA = ParamSet(i, 11);
         E_th     = ParamSet(i, 12);
         A_pth    = ParamSet(i, 13);
@@ -178,11 +175,9 @@ function g_AttenuationOnly(patient_type, fold_change)
         output_four = [Params, SteadyState_4];
         
         % Combine all steady states for this patient
-        SteadyStateCell{i} = [output_one; output_two; output_three; output_four];
+        SteadyStates = [output_one; output_two; output_three; output_four];
+        AllSteadyStates = [AllSteadyStates; SteadyStates];
     end
-    
-    % Concatenate all results after parallel loop
-    AllSteadyStates = vertcat(SteadyStateCell{:});
     
     fprintf('\b\b\b\b100%%\n');
     fprintf('  ✓ Complete (%.1f seconds)\n', toc);
@@ -225,67 +220,11 @@ function g_AttenuationOnly(patient_type, fold_change)
                'Current path: %s'], helper_path, path);
     end
     
-    % Classify the processed patients directly (instead of using a_PatientGroups)
-    fprintf('  Classifying %s patients into clinical categories...\n', patient_type);
+    % Initialize variable that will be created by a_PatientGroups
+    AllVirtualPatientTypes = [];
     
-    % Extract parameters for classification
-    n_states = size(AllVirtualPatients, 1);
-    A_max = AllVirtualPatients(1, 4);   % SA maximum population  
-    E_max = AllVirtualPatients(1, 11);  % SE maximum population
-    
-    % Initialize category vector
-    category = zeros(n_states, 1);
-    
-    % Classify each state (using same logic as a_PatientGroups)
-    for i = 1:n_states
-        A_th = AllVirtualPatients(i, 7);   % SA threshold
-        % gamma_AE not needed for classification logic
-        E_th = AllVirtualPatients(i, 14);  % SE threshold
-        
-        A_star = AllVirtualPatients(i, 20); % SA steady state
-        E_star = AllVirtualPatients(i, 21); % SE steady state  
-        B_star = AllVirtualPatients(i, 22); % Barrier steady state
-        
-        % Determine agr switch states
-        sw_E = (E_star >= E_th) && (E_star <= E_max);
-        sw_A = (A_star >= A_th) && (A_star <= A_max);
-        
-        % Classification logic (same as a_PatientGroups)
-        if (A_star == 0) && (E_star == 0) && (B_star == 1) && (~sw_A) && (~sw_E)
-            category(i) = 1; % Healthy, no bacteria
-        elseif (A_star > 0) && (A_star < A_th) && (E_star == 0) && (B_star == 1) && (~sw_A) && (~sw_E)
-            category(i) = 2; % Low SA, healthy
-        elseif ((A_star == 0) && (E_star > 0) && (E_star < E_th) && (B_star == 1) && (~sw_A) && (~sw_E)) || ...
-               ((A_star == 0) && (E_star >= E_th) && (E_star <= E_max) && (~sw_A) && sw_E && (B_star == 1))
-            category(i) = 3; % SE present, healthy
-        elseif (A_star > 0) && (A_star < A_th) && (E_star > 0) && (E_star < E_th) && (B_star == 1) && (~sw_A) && (~sw_E)
-            category(i) = 4; % Both low, healthy
-        elseif (A_star == 0) && (E_star >= E_th) && (E_star <= E_max) && (~sw_A) && sw_E && (B_star < 1)
-            category(i) = 5; % High SE agr, damaged
-        elseif (A_star > 0) && (A_star < A_th) && (E_star >= E_th) && (E_star <= E_max) && (~sw_A) && sw_E && (B_star == 1)
-            category(i) = 6; % Low SA + high SE agr, healthy
-        elseif (A_star >= A_th) && (A_star <= A_max) && (E_star == 0) && sw_A && (~sw_E) && (B_star < 1)
-            category(i) = 7; % High SA agr, no SE
-        elseif (A_star >= A_th) && (A_star <= A_max) && (E_star > 0) && (E_star < E_th) && sw_A && (~sw_E) && (B_star < 1)
-            category(i) = 8; % High SA agr + low SE
-        elseif (A_star >= A_th) && (A_star <= A_max) && (E_star >= E_th) && (E_star <= E_max) && sw_A && sw_E && (B_star < 1)
-            category(i) = 9; % Both high agr
-        end
-    end
-    
-    % Create output matrix with categories
-    AllVirtualPatientTypes = [AllVirtualPatients, category];
-    
-    % Save classified results to local data folder
-    local_data_folder = 'data';
-    if ~exist(local_data_folder, 'dir')
-        mkdir(local_data_folder);
-    end
-    
-    date_str = char(datetime('now', 'Format', 'yyyy-MM-dd'));
-    patient_types_file = fullfile(local_data_folder, sprintf('%s_attenuation_%s.csv', patient_type, date_str));
-    writematrix(AllVirtualPatientTypes, patient_types_file);
-    fprintf('  ✓ Saved classified results: %s\n', patient_types_file);
+    % Assign region categories using a_PatientGroups
+    a_PatientGroups;
     
     fprintf('  ✓ Patients organized and classified\n');
     fprintf('  Unique patients: %d\n', length(unique(ic)));
@@ -294,33 +233,23 @@ function g_AttenuationOnly(patient_type, fold_change)
     %% Count healthy states gained
     fprintf('[6/6] Analyzing treatment effectiveness...\n');
     
-    % Count healthy steady states by category (B* = 1, regions 1-4)  
-    % Category is now in the last column
-    category_col = size(AllVirtualPatientTypes, 2);
-    count_1 = nnz(AllVirtualPatientTypes(:, category_col) == 1);
-    count_2 = nnz(AllVirtualPatientTypes(:, category_col) == 2);
-    count_3 = nnz(AllVirtualPatientTypes(:, category_col) == 3);
-    count_4 = nnz(AllVirtualPatientTypes(:, category_col) == 4);
+    % Count patients with healthy states (B* = 1, regions 1-4)
+    count_1 = sum(AllVirtualPatientTypes(:, 26) == 1);
+    count_2 = sum(AllVirtualPatientTypes(:, 26) == 2);
+    count_3 = sum(AllVirtualPatientTypes(:, 26) == 3);
+    count_4 = sum(AllVirtualPatientTypes(:, 26) == 4);
     
-    count_healthy_states = count_1 + count_2 + count_3 + count_4;
+    count_healthy = count_1 + count_2 + count_3 + count_4;
     
-    % Count unique patients with at least one healthy state
-    healthy_mask = (AllVirtualPatientTypes(:, category_col) == 1) | ...
-                   (AllVirtualPatientTypes(:, category_col) == 2) | ...
-                   (AllVirtualPatientTypes(:, category_col) == 3) | ...
-                   (AllVirtualPatientTypes(:, category_col) == 4);
-    unique_healthy_patients = length(unique(AllVirtualPatientTypes(healthy_mask, 1)));
+    percentage = count_healthy / n_patients * 100;
     
-    percentage = unique_healthy_patients / n_patients * 100;
-    
-    fprintf('  Healthy steady states by category:\n');
-    fprintf('    Category 1: %d states\n', count_1);
-    fprintf('    Category 2: %d states\n', count_2);
-    fprintf('    Category 3: %d states\n', count_3);
-    fprintf('    Category 4: %d states\n', count_4);
-    fprintf('    Total healthy states: %d\n', count_healthy_states);
-    fprintf('  Unique patients with healthy states: %d out of %d (%.1f%%)\n', ...
-        unique_healthy_patients, n_patients, percentage);
+    fprintf('  Healthy states (B* = 1) by region:\n');
+    fprintf('    Region 1: %d\n', count_1);
+    fprintf('    Region 2: %d\n', count_2);
+    fprintf('    Region 3: %d\n', count_3);
+    fprintf('    Region 4: %d\n', count_4);
+    fprintf('    Total: %d (%.1f%% of original %d patients)\n', ...
+        count_healthy, percentage, n_patients);
     fprintf('\n');
     
     %% Save outputs
@@ -336,17 +265,17 @@ function g_AttenuationOnly(patient_type, fold_change)
     fprintf('    Use this file for dual-action treatment (attenuation + SA-killing)\n');
     
     % Save summary statistics
-    summary = [fold_change, n_patients, unique_healthy_patients, percentage];
+    summary = [fold_change, n_patients, count_healthy, percentage];
     summary_file = sprintf('%s/attenuation_summary_%s_%dx.csv', output_folder, patient_type, fold_change);
     writematrix(summary, summary_file);
     fprintf('  ✓ Saved: %s\n', summary_file);
-    fprintf('    [fold_change, n_original, n_patients_healthy, percentage]\n\n');
+    fprintf('    [fold_change, n_original, n_healthy, percentage]\n\n');
     
     %% Summary
     fprintf('=== Attenuation-Only Treatment Complete ===\n');
     fprintf('Treatment: %dx enhancement of gamma_AB and gamma_EB\n', fold_change);
     fprintf('Patients gaining healthy states: %d out of %d (%.1f%%)\n', ...
-        unique_healthy_patients, n_patients, percentage);
+        count_healthy, n_patients, percentage);
     fprintf('\n');
     fprintf('Next steps:\n');
     fprintf('  1. Visualize attenuation-only results (optional)\n');
