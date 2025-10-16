@@ -222,20 +222,29 @@ fprintf('  ✓ Output matrix size: %d rows × %d columns\n', ...
 %% Save results
 fprintf('\nSaving results...\n');
 
-% Save as CSV (timestamped)
-csv_filename = fullfile(data_folder, sprintf('AllVirtualPatientTypes_%s.csv', date_str));
-writematrix(AllVirtualPatientTypes, csv_filename);
-fprintf('  ✓ Saved CSV: %s\n', csv_filename);
+% Check if intermediate files should be saved (from main script)
+if ~exist('save_intermediate_files', 'var')
+    save_intermediate_files = true;  % Default: save everything (standalone mode)
+end
 
-% Save as MAT (faster for MATLAB)
-mat_filename = fullfile(data_folder, sprintf('AllVirtualPatientTypes_%s.mat', date_str));
-save(mat_filename, 'AllVirtualPatientTypes', 'category');
-fprintf('  ✓ Saved MAT: %s\n', mat_filename);
+if save_intermediate_files
+    % Save as CSV (timestamped)
+    csv_filename = fullfile(data_folder, sprintf('AllVirtualPatientTypes_%s.csv', date_str));
+    writematrix(AllVirtualPatientTypes, csv_filename);
+    fprintf('  ✓ Saved CSV: %s\n', csv_filename);
 
-% Save latest version (for easy reference by next scripts)
+    % Save as MAT (faster for MATLAB)
+    mat_filename = fullfile(data_folder, sprintf('AllVirtualPatientTypes_%s.mat', date_str));
+    save(mat_filename, 'AllVirtualPatientTypes', 'category');
+    fprintf('  ✓ Saved MAT: %s\n', mat_filename);
+else
+    fprintf('  ⊝ Intermediate files skipped (save_intermediate_files = false)\n');
+end
+
+% ALWAYS save latest version - THIS IS THE ESSENTIAL OUTPUT
 csv_latest = fullfile(data_folder, 'AllVirtualPatientTypes_latest.csv');
 writematrix(AllVirtualPatientTypes, csv_latest);
-fprintf('  ✓ Saved latest CSV: %s\n', csv_latest);
+fprintf('  ✓ Saved latest CSV: %s ⭐ ESSENTIAL OUTPUT\n', csv_latest);
 
 %% Category statistics and summary
 fprintf('\n=== Category Distribution ===\n');
