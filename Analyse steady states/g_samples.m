@@ -1,6 +1,6 @@
-% g_samples.m
+% g_Samples.m
 %
-% Purpose: Generate parameter samples for virtual patient generation
+% Purpose: Generate parameter values for virtual patients
 %          Samples 1 million parameter sets from log-uniform distributions
 %          based on ranges defined in Supplementary Table S1
 %
@@ -12,8 +12,6 @@
 % Version: 2.0 - Added output folder, improved clarity
 
 clc;
-% Don't clear all - we want to keep workspace variables from main script
-% clear all;  
 close all;
 
 fprintf('Generating parameter samples...\n\n');
@@ -32,7 +30,7 @@ if ~exist('date_str', 'var')
     date_str = datestr(now, 'yyyy-mm-dd');
 end
 
-% Random seed - IMPORTANT: This should be set by main script or user
+% Random seed - set by main script or user
 % Don't initialize here if running from main script
 if ~exist('rng_initialized', 'var')
     rng(0, 'twister');  % Default seed only if not already set
@@ -52,7 +50,6 @@ end
 fprintf('\n');
 
 %% Helper function for log-uniform sampling
-% This reduces repetitive code
 log_uniform = @(n, log_min, log_max) (log_max - log_min) .* rand(n, 1) + log_min;
 
 %% Growth, inhibitions and killing of S. aureus
@@ -60,7 +57,7 @@ fprintf('[1/3] Sampling S. aureus parameters...\n');
 
 % kappa_A: Growth rate of SA
 % Range: [9, 27] → log range: [0.954, 1.431]
-log_kappa_A = log_uniform(n_samples, 0.954, 1.431);
+log_kappa_A = log_uniform(n_samples, log10(9), log10(27));
 
 % A_max: Maximum SA population (constant)
 % Value: 11.1 × 10^8 → log value: 9.045
@@ -68,30 +65,30 @@ A_max = repmat(11.1 * 10^8, n_samples, 1);
 
 % gamma_AB: SA inhibition by barrier
 % Range: [58.7, 5870] → log range: [1.769, 3.769]
-log_gamma_AB = log_uniform(n_samples, 1.769, 3.769);
+log_gamma_AB = log_uniform(n_samples, log10(58.7), log10(5870));
 
 % delta_AE: SA killing by SE
 % Range: [4.78, 478] → log range: [0.679, 2.679]
-log_delta_AE = log_uniform(n_samples, 0.679, 2.679);
+log_delta_AE = log_uniform(n_samples, log10(4.78), log10(478));
 
 % A_th: SA threshold for barrier damage
 % Range: [1.13 × 10^7, 1.11 × 10^9] → log range: [7.053, 9.045]
-log_A_th = log_uniform(n_samples, 7.053, 9.045);
+log_A_th = log_uniform(n_samples, log10(1.13 * 10^7), log10(1.11 * 10^9));
 
 % E_pth: SE presence threshold for SA growth inhibition
 % Range: [1.13 × 10^7, 1.11 × 10^9] → log range: [7.053, 9.045]
-log_E_pth = log_uniform(n_samples, 7.053, 9.045);
+log_E_pth = log_uniform(n_samples, log10(1.13 * 10^7), log10(1.11 * 10^9));
 
 % gamma_AE: SA inhibition by SE presence
 % Range: [1.30 × 10^-9, 1.30 × 10^-7] → log range: [-8.886, -6.886]
-log_gamma_AE = log_uniform(n_samples, -8.886, -6.886);
+log_gamma_AE = log_uniform(n_samples, log10(1.30 * 10^-9), log10(1.30 * 10^-7));
 
 %% Growth, inhibitions and killings of S. epidermidis
 fprintf('[2/3] Sampling S. epidermidis parameters...\n');
 
 % kappa_E: Growth rate of SE
 % Range: [9, 27] → log range: [0.954, 1.431]
-log_kappa_E = log_uniform(n_samples, 0.954, 1.431);
+log_kappa_E = log_uniform(n_samples, log10(9), log10(27));
 
 % E_max: Maximum SE population (constant)
 % Value: 11.1 × 10^8 → log value: 9.045
@@ -99,30 +96,30 @@ E_max = repmat(11.1 * 10^8, n_samples, 1);
 
 % gamma_EB: SE inhibition by barrier
 % Range: [55.8, 5580] → log range: [1.747, 3.747]
-log_gamma_EB = log_uniform(n_samples, 1.747, 3.747);
+log_gamma_EB = log_uniform(n_samples, log10(55.8), log10(5580));
 
 % delta_EA: SE killing by SA
 % Range: [4.78, 478] → log range: [0.679, 2.679]
-log_delta_EA = log_uniform(n_samples, 0.679, 2.679);
+log_delta_EA = log_uniform(n_samples, log10(4.78), log10(478));
 
 % E_th: SE threshold for barrier damage
 % Range: [1.13 × 10^7, 1.11 × 10^9] → log range: [7.053, 9.045]
-log_E_th = log_uniform(n_samples, 7.053, 9.045);
+log_E_th = log_uniform(n_samples, log10(1.13 * 10^7), log10(1.11 * 10^9));
 
 % A_pth: SA presence threshold for SE growth inhibition
 % Range: [1.13 × 10^7, 1.11 × 10^9] → log range: [7.053, 9.045]
-log_A_pth = log_uniform(n_samples, 7.053, 9.045);
+log_A_pth = log_uniform(n_samples, log10(1.13 * 10^7), log10(1.11 * 10^9));
 
 %% Turnover and damage to barrier integrity
 fprintf('[3/3] Sampling barrier parameters...\n');
 
 % kappa_B: Barrier recovery rate
 % Range: [7.11 × 10^-3, 0.711] → log range: [-2.148, -0.148]
-log_kappa_B = log_uniform(n_samples, -2.148, -0.148);
+log_kappa_B = log_uniform(n_samples, log10(7.11 * 10^-3), log10(0.711));
 
 % delta_B: Barrier degradation rate (baseline)
 % Range: [2.89 × 10^-3, 0.289] → log range: [-2.539, -0.539]
-log_delta_B = log_uniform(n_samples, -2.539, -0.539);
+log_delta_B = log_uniform(n_samples, log10(2.89 * 10^-3), log10(0.289));
 
 % delta_BA: Barrier damage by SA
 % Range: [1.0 × 10^-10, 1.0 × 10^-8] → log range: [-10, -8]
