@@ -4,7 +4,7 @@
 %          Analyzes 1 million parameter sets across 4 biological scenarios
 %          (different combinations of SA and SE accessory gene regulator activity)
 %
-% Inputs:  data/SampledParameters_latest.csv (from g_samples.m)
+% Inputs:  data/SampledParameters_latest.csv (from g_Samples.m)
 % Outputs: data/AllSteadyStates_[date].csv
 %          Contains 23 columns: 17 parameters + 3 steady states + 3 eigenvalues
 %
