@@ -11,14 +11,12 @@
 %
 % Author: Jamie Lee
 % Date: 6 October 2025
-% Version: 2.0 - Improved clarity, added configuration, validation
+% Version: 2.0 - Improved clarity, added configuration
 
 clc;
-% Don't clear all - keeps workspace variables from main script
-% clear all;
 close all;
 
-fprintf('=== Virtual Patient Assignment Script ===\n');
+fprintf('=== Virtual Patient Assignment ===\n');
 fprintf('Grouping steady states by unique parameter sets...\n\n');
 
 tic;  % Start timing
@@ -119,19 +117,6 @@ fprintf('    - Minimum:  %d\n', min_states);
 fprintf('    - Maximum:  %d\n', max_states);
 fprintf('    - Mean:     %.2f\n', mean_states);
 fprintf('    - Median:   %.0f\n', median_states);
-
-% Count distribution
-fprintf('  ✓ Distribution:\n');
-for i = 1:min(5, max_states)  % Show up to 5
-    count = sum(states_per_patient == i);
-    fprintf('    - %d stable state(s):  %d patients (%.1f%%)\n', ...
-        i, count, 100*count/n_unique_patients);
-end
-if max_states > 5
-    count = sum(states_per_patient > 5);
-    fprintf('    - >5 stable states:   %d patients (%.1f%%)\n', ...
-        count, 100*count/n_unique_patients);
-end
 
 %% Build output matrix
 fprintf('\n[5/5] Building output matrix...\n');
