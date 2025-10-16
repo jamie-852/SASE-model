@@ -8,7 +8,7 @@
 %
 % USAGE:
 %   1. Modify the CONFIGURATION section below to set your parameters
-%   2. Run this script: matlab -batch "run('run_SteadyStates.m')"
+%   2. Run this script in the terminal: matlab -batch "run('run_SteadyStates.m')"
 %   3. Results will be saved in data/ folder
 %
 % OUTPUTS:
@@ -98,7 +98,7 @@ step_start = tic;
 rng(config.random_seed, 'twister');
 fprintf('→ Random seed set to: %d\n', config.random_seed);
 
-% Call g_samples.m with configuration
+% Call g_Samples.m with configuration
 generate_parameter_samples(config);
 
 fprintf('\n✓ Step 1 complete (%.1f seconds)\n\n', toc(step_start));
@@ -220,26 +220,6 @@ else
     fprintf('\n');
 end
 
-fprintf('═══ Next Steps ═══\n');
-fprintf('The primary output file and classification CSVs are ready for downstream analysis:\n\n');
-fprintf('  1. Visualize steady state subtypes\n');
-fprintf('     → cd ../''Group virtual skin sites''\n');
-fprintf('     → run g_PatientTypes_1; run g_PatientTypes_2; run g_PatientTypes_3\n');
-fprintf('\n');
-fprintf('  2. Generate violin plots\n');
-fprintf('     → cd ../''Violin plots''\n');
-fprintf('     → run run_violin_analysis(''generate_all'', true)\n');
-fprintf('\n');
-fprintf('  3. Analyze SA-killing treatment effects\n');
-fprintf('     → cd ../''Effect of SA-killing''\n');
-fprintf('     → run g_ExtractInitialConditions\n');
-fprintf('     → run g_TreatmentResponse\n');
-fprintf('     → run g_Plot\n');
-fprintf('\n');
-fprintf('  4. Perform custom analyses\n');
-fprintf('     → Load AllVirtualPatientTypes_latest.csv and filter by region\n');
-fprintf('\n');
-
 fprintf('╔════════════════════════════════════════════════════════╗\n');
 fprintf('║                       DONE!                            ║\n');
 fprintf('╚════════════════════════════════════════════════════════╝\n');
@@ -263,7 +243,7 @@ function generate_parameter_samples(config)
     assignin('base', 'rng_initialized', true);  % Flag to prevent re-initialization
     
     % Run the script in base workspace
-    evalin('base', 'run(''g_samples.m'')');
+    evalin('base', 'run(''g_Samples.m'')');
 end
 
 function compute_steady_states(config)
