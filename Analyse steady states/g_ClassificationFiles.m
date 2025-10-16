@@ -160,7 +160,7 @@ fprintf('\n=== Saving Classification Files ===\n');
 if ~isempty(asymp_sites)
     output_file = fullfile(data_folder, 'asymp.csv');
     writematrix(asymp_sites, output_file);
-    fprintf('  ✓ Saved %s\n', output_file);
+    fprintf('  ✓ Saved %s ⭐ ESSENTIAL OUTPUT\n', output_file);
     fprintf('    %d rows (%d patients)\n', size(asymp_sites, 1), n_asymp);
 else
     warning('No asymptomatic sites found');
@@ -170,7 +170,7 @@ end
 if ~isempty(rev_sites)
     output_file = fullfile(data_folder, 'reversible.csv');
     writematrix(rev_sites, output_file);
-    fprintf('  ✓ Saved %s\n', output_file);
+    fprintf('  ✓ Saved %s ⭐ ESSENTIAL OUTPUT\n', output_file);
     fprintf('    %d rows (%d patients)\n', size(rev_sites, 1), n_rev);
 else
     warning('No reversible sites found');
@@ -180,6 +180,7 @@ end
 if ~isempty(irrev_sites)
     output_file = fullfile(data_folder, 'irreversible.csv');
     writematrix(irrev_sites, output_file);
+    fprintf('  ✓ Saved %s ⭐ ESSENTIAL OUTPUT\n', output_file);
     fprintf('  ✓ Saved %s\n', output_file);
     fprintf('    %d rows (%d patients)\n', size(irrev_sites, 1), n_irrev);
 else

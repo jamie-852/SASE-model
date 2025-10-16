@@ -164,17 +164,26 @@ fprintf('Parameter matrix size: %d × %d\n', size(samples, 1), size(samples, 2))
 %% Save results
 fprintf('\nSaving results...\n');
 
-% Save as CSV (for compatibility and inspection)
-csv_filename = fullfile(data_folder, sprintf('SampledParameters_%s.csv', date_str));
-writematrix(samples, csv_filename);
-fprintf('  ✓ Saved CSV: %s\n', csv_filename);
+% Check if intermediate files should be saved (from main script)
+if ~exist('save_intermediate_files', 'var')
+    save_intermediate_files = true;  % Default: save everything (standalone mode)
+end
 
-% Also save as MAT (for faster loading in MATLAB)
-mat_filename = fullfile(data_folder, sprintf('SampledParameters_%s.mat', date_str));
-save(mat_filename, 'samples', 'n_samples');
-fprintf('  ✓ Saved MAT: %s\n', mat_filename);
+if save_intermediate_files
+    % Save as CSV (for compatibility and inspection)
+    csv_filename = fullfile(data_folder, sprintf('SampledParameters_%s.csv', date_str));
+    writematrix(samples, csv_filename);
+    fprintf('  ✓ Saved CSV: %s\n', csv_filename);
 
-% Save a copy without date for easier referencing by other scripts
+    % Also save as MAT (for faster loading in MATLAB)
+    mat_filename = fullfile(data_folder, sprintf('SampledParameters_%s.mat', date_str));
+    save(mat_filename, 'samples', 'n_samples');
+    fprintf('  ✓ Saved MAT: %s\n', mat_filename);
+else
+    fprintf('  ⊝ Intermediate files skipped (save_intermediate_files = false)\n');
+end
+
+% Always save latest version (needed by next scripts)
 csv_latest = fullfile(data_folder, 'SampledParameters_latest.csv');
 writematrix(samples, csv_latest);
 fprintf('  ✓ Saved latest CSV: %s\n', csv_latest);

@@ -169,19 +169,6 @@ run run_Supplementary_b-d.m
 
 ---
 
-### Quick Navigation Summary
-
-| Figure | Location | Status |
-|--------|----------|--------|
-| **Figure 2** | `Group virtual skin sites/` | ✅ Ready |
-| **Figure 3b-d** | `Effect of SA-killing/` | ⚠️ In progress |
-| **Figure 4a** | `Violin plots/` | ✅ Ready |
-| **Figure 5b-d** | `Effect of dual-action treatment/` | ⚠️ In progress |
-| **Supp. Fig S1** | `Group virtual skin sites/` | ✅ Ready |
-| **Supp. Figs S2-S3** | `Effect of SA-killing/` | ⚠️ In progress |
-| **Supp. Figs S4-S5** | `Violin plots/` | ✅ Ready |
-| **Supp. Fig S6** | `Effect of dual-action treatment/` | ⚠️ In progress |
-
 ## 🎨 Figure Generation
 
 ### Main Text Figures
@@ -208,13 +195,23 @@ run run_Supplementary_b-d.m
 ```
 SASE-model/
 ├── Analyse steady states/          # Key workflow: Generate & classify patients
+│   ├── run_SteadyStates.m          # Main entry point
 │   ├── g_samples.m                 # Generate parameter sets
-│   ├── a_SampledParameters.m       # Analyse steady states
-│   ├── g_VirtualPatients.m         # Create virtual patients
-│   ├── a_PatientGroups.m           # Classify by barrier integrity value
-│   ├── g_classification_csvs.m     # Classify into Asymptomatic, Reversible, and Irreversible skin types
+│   ├── a_SampledParameters.m       # Compute steady states
+│   ├── g_VirtualPatients.m         # Assign patient IDs
+│   ├── a_PatientGroups.m           # Classify into subtypes based on QS-switches
+│   ├── g_classification_csvs.m     # Generate classification CSVs
+│   ├── f_computeCase1.m            # Dependency
+│   ├── f_computeCase2.m            # Dependency
+│   ├── f_computeCase3.m            # Dependency
+│   ├── f_computeCase4.m            # Dependency
+│   ├── f_defineODEs.m              # Dependency
+│   ├── f_SteadyStateCheck.m        # Dependency
 │   └── data/
-│       └── AllVirtualPatientTypes_latest.csv
+│       ├── asymp.csv               # Asymptomatic skin sites
+│       ├── reversible.csv          # Reversible skin sites
+│       ├── irreversible.csv        # Irreversible skin sites
+│       └── AllVirtualPatientTypes_latest.csv   # Key output
 │
 ├── Group virtual skin sites/       # Visualise virtual skin sites by steady states observed
 │   ├── g_PatientTypes_1.m          # Plot virtual skin sites with 1 steady state

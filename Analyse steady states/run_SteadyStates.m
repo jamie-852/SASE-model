@@ -50,7 +50,7 @@ config.data_folder = 'data';      % Where CSV/MAT files are saved
 
 % Processing options
 config.suppress_ode_warnings = true;   % Hide ODE solver warnings (cleaner output)
-config.save_intermediate_files = true; % Save outputs from each step
+config.save_intermediate_files = false; % Save outputs from each step - disabled to reduce clutter
 
 % Date stamp for output files
 config.date_str = datestr(now, 'yyyy-mm-dd');
@@ -198,16 +198,25 @@ fprintf('  - Columns 23-25: Eigenvalues (λ1, λ2, λ3)\n');
 fprintf('  - Column 26:    Region (1-9)\n');
 fprintf('\n');
 
+fprintf('═══ Essential Output Files ═══\n');
+fprintf('⭐ %s/AllVirtualPatientTypes_latest.csv (main dataset)\n', config.data_folder);
+fprintf('⭐ %s/asymp.csv (asymptomatic patients)\n', config.data_folder);
+fprintf('⭐ %s/reversible.csv (reversible patients)\n', config.data_folder);
+fprintf('⭐ %s/irreversible.csv (irreversible patients)\n', config.data_folder);
+fprintf('\n');
+
 if config.save_intermediate_files
     fprintf('═══ Intermediate Files ═══\n');
     fprintf('  → %s/SampledParameters_latest.csv (17 cols)\n', config.data_folder);
     fprintf('  → %s/AllSteadyStates_latest.csv (23 cols)\n', config.data_folder);
     fprintf('  → %s/AllVirtualPatients_latest.csv (25 cols)\n', config.data_folder);
+    fprintf('  → Timestamped versions with date suffixes\n');
     fprintf('\n');
-    fprintf('═══ Classification Files ═══\n');
-    fprintf('  → %s/asymp.csv\n', config.data_folder);
-    fprintf('  → %s/reversible.csv\n', config.data_folder);
-    fprintf('  → %s/irreversible.csv\n', config.data_folder);
+else
+    fprintf('═══ Storage Optimization ═══\n');
+    fprintf('  ⊝ Intermediate files disabled (save_intermediate_files = false)\n');
+    fprintf('  ⊝ Only essential outputs saved\n');
+    fprintf('  ⊝ Reduced disk usage\n');
     fprintf('\n');
 end
 
@@ -250,6 +259,7 @@ function generate_parameter_samples(config)
     assignin('base', 'n_samples', config.n_samples);
     assignin('base', 'data_folder', config.data_folder);
     assignin('base', 'date_str', config.date_str);
+    assignin('base', 'save_intermediate_files', config.save_intermediate_files);
     assignin('base', 'rng_initialized', true);  % Flag to prevent re-initialization
     
     % Run the script in base workspace
@@ -267,6 +277,7 @@ function compute_steady_states(config)
     assignin('base', 'n_samples', config.n_samples);
     assignin('base', 'data_folder', config.data_folder);
     assignin('base', 'date_str', config.date_str);
+    assignin('base', 'save_intermediate_files', config.save_intermediate_files);
     
     evalin('base', 'run(''a_SampledParameters.m'')');
 end
@@ -280,6 +291,7 @@ function assign_patient_ids(config)
     % Set workspace variables
     assignin('base', 'data_folder', config.data_folder);
     assignin('base', 'date_str', config.date_str);
+    assignin('base', 'save_intermediate_files', config.save_intermediate_files);
     
     evalin('base', 'run(''g_VirtualPatients.m'')');
 end
@@ -293,6 +305,7 @@ function classify_patient_groups(config)
     % Set workspace variables
     assignin('base', 'data_folder', config.data_folder);
     assignin('base', 'date_str', config.date_str);
+    assignin('base', 'save_intermediate_files', config.save_intermediate_files);
     
     evalin('base', 'run(''a_PatientGroups.m'')');
 end
