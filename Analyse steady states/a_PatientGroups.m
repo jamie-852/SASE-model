@@ -22,14 +22,12 @@
 %
 % Author: Jamie Lee
 % Date: 6 October 2025
-% Version: 2.0 - Improved clarity, added validation, visualization
+% Version: 2.0 - Improved clarity
 
 clc;
-% Don't clear all - keeps workspace variables from main script
-% clear all;
 close all;
 
-fprintf('=== Patient Classification Script ===\n');
+fprintf('=== Patient Classification ===\n');
 fprintf('Classifying virtual patients into clinical categories...\n\n');
 
 tic;  % Start timing
@@ -197,8 +195,8 @@ end
 
 fprintf('  ✓ Classification complete\n');
 
-%% Validate classification
-fprintf('\nValidating classification...\n');
+%% Check classification
+fprintf('\nChecking classification...\n');
 
 % Check for unclassified states
 unclassified = sum(category == 0);
