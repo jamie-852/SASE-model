@@ -1,7 +1,7 @@
 % g_ExampleSiteAnalysis.m
 %
-% Purpose: High-resolution treatment response analysis for ONE example patient
-%          Shows narrow therapeutic window for reversible sites
+% Purpose: Treatment response analysis for ONE example patient
+%          Shows narrow therapeutic window for particular reversible site
 %
 % This script explores treatment parameter space at much finer resolution
 % than g_TreatmentResponse.m to reveal the narrow window where treatment
@@ -41,7 +41,7 @@ function g_ExampleSiteAnalysis(patient_id)
     config.duration_step = 0.1;     % Fine resolution: 0.1 (vs 0.5 in main)
     config.duration_end = 10;
     
-    % Visualization markers (for specific treatment points)
+    % Visualisation markers (for specific treatment points)
     config.marker1 = [4, 4.1];      % [duration, strength] - successful
     config.marker2 = [4, 5.0];      % [duration, strength] - failed
     
