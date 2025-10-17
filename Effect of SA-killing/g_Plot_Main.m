@@ -3,17 +3,16 @@
 % Purpose: Generate treatment response heatmaps (Figure 3)
 %          Creates 3 plots: All sites, Reversible only, Irreversible only
 %
-% Inputs:  data/reversible_treatment_results.csv
+% Inputs:  data/reversible_treatment_results_main.csv
 %          data/reversible_SAkilling.csv (for patient counts)
 %          data/irreversible_SAkilling.csv (for patient counts)
 %
-% Outputs: figures/Fig3_AllSites.png
-%          figures/Fig3_Reversible.png
-%          figures/Fig3_Irreversible.png
+% Outputs: figures/Figure3_AllSites.png
+%          figures/Figure3_Reversible.png
+%          figures/Figure3_Irreversible.png
 %
 % Usage:
-%   g_Plot()              % Default figure names
-%   g_Plot('Supp')        % For supplementary figures (adds prefix)
+%   g_Plot_Main()              % Default figure names
 %
 % Author: Jamie Lee
 % Date: 10 October 2025
@@ -26,11 +25,11 @@ function g_Plot_Main(fig_prefix)
     
     %% Setup
     if nargin < 1
-        fig_prefix = 'Fig3';
+        fig_prefix = 'Figure3';
     end
     
     % Input files
-    results_file = 'data/reversible_treatment_results.csv';
+    results_file = 'data/reversible_treatment_results_main.csv';
     reversible_file = 'data/reversible_SAkilling.csv';
     irreversible_file = 'data/irreversible_SAkilling.csv';
     
@@ -69,7 +68,7 @@ function g_Plot_Main(fig_prefix)
     %% Extract treatment parameters
     strengths = unique(treat_plot(:, 1));
     durations = unique(treat_plot(:, 2));
-    reversible_success = treat_plot(:, 3);  % FIX: Was column 4, should be 3
+    reversible_success = treat_plot(:, 3); 
     
     n_strengths = length(strengths);
     n_durations = length(durations);

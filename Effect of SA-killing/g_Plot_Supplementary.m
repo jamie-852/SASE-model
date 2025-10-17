@@ -1,15 +1,15 @@
 % g_Plot_Supplementary.m
 %
 % Purpose: Generate supplementary treatment response heatmaps with exact values
-%          Shows percentage recovery in each cell (no contour lines)
+%          Creates 3 plots without contour lines (Figure S2)
 %
-% Inputs:  data/reversible_treatment_results.csv
+% Inputs:  data/reversible_treatment_results_supp.csv
 %          data/reversible_SAkilling.csv (for patient counts)
 %          data/irreversible_SAkilling.csv (for patient counts)
 %
-% Outputs: figures/SuppFig_AllSites.png
-%          figures/SuppFig_Reversible.png
-%          figures/SuppFig_Irreversible.png
+% Outputs: figures/FigureS2_AllSites.png
+%          figures/FigureS2_Reversible.png
+%          figures/FigureS2_Irreversible.png
 %
 % Usage:
 %   g_Plot_Supplementary()
@@ -23,10 +23,10 @@ function g_Plot_Supplementary()
     fprintf('=== Generating Supplementary Treatment Response Heatmaps ===\n\n');
     
     %% Setup
-    fig_prefix = 'FigS2';
+    fig_prefix = 'FigureS2';
     
     % Input files
-    results_file = 'data/reversible_treatment_results.csv';
+    results_file = 'data/reversible_treatment_results_supp.csv';
     reversible_file = 'data/reversible_SAkilling.csv';
     irreversible_file = 'data/irreversible_SAkilling.csv';
     
