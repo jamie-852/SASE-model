@@ -372,7 +372,91 @@ matlab -batch "cd('Group virtual skin sites'); run_steady_state_plots('all')"
 
 ---
 
-### Stage 3: Analyze Parameter Distributions
+### Stage 3: Apply SA-killing treatment
+
+**Location**: `Effect of SA-killing/`
+
+**Purpose**: Analyse SA-killing treatment effectiveness on virtual patients with damaged skin barrier. Focuses specifically on reversible and irreversible skin sites.
+
+#### 📁 File organisation:
+
+#### 🚀 Main runner scripts (Entry Points)
+1. run_main.m
+  - Purpose: Generate Figure 3b-d (main text)
+  - Parameters: Strength 0-5, Duration 1-4 days
+  - Outputs: Fig3_AllSites.png, Fig3_Reversible.png, Fig3_Irreversible.png
+2. run_supplementary.m
+  - Purpose: Generate Supplementary Figure S2 (supplementary)
+  - Parameters: Strength 0-10, Duration 2-50 days
+  - Outputs: FigS2_AllSites.png, FigS2_Reversible.png, FigS2_Irreversible.png
+3. run_supplementary_example_site.m
+  - Purpose: Generate Supplementary Figure S3 (supplementary)
+  - Parameters: ... (!!!)
+  - Outputs: FigS3_PhasePortrait.png, FigS3_TreatmentResponse.png
+
+#### 🔧 Core analysis functions (called automatically by main scripts)
+4. g_ExtractInitialConditions.m
+  - Purpose: Extract worst-case initial conditions for treatment simulations (see Materials and Methods in paper)
+  - Used by: run_main.m, run_supplementary.m
+5. g_TreatmentResponse.m
+  - Purpose: Run SA-killing treatment grid simulations
+  - Input: data/reversible_SAkilling.csv
+  - Output: data/reversible_treatment_results.csv
+
+#### 📊 Visualisation functions (called automatically by main scripts)
+6. g_Plot_Main.m
+  - Purpose: Generate main text heatmaps with contour lines (Figure 3b-d)
+  - Used by: run_main.m
+7. g_Plot_Supplementary.m
+  - Purpose: Generate supplementary heatmaps with exact values
+  - Used by: run_supplementary.m
+8. g_VisualiseExampleSites.m
+  - Purpose: Generate phase portrait plot (Supplementary Figure S3a)
+  - Used by: run_supplementary_example_site.m
+9. g_ExampleSiteAnalysis.m
+  - Purpose: Generate treatment response plot for a single patient (Supplementary Figure S3b)
+  - Used by: run_supplementary_example_site.m
+
+#### ⚙️ Mathematical functions (called automatically by main scripts)
+10. f_defineODEs.m - ODEs defining mathematical model
+11. f_defineODEs_SAkilling.m - ODEs with SA-killing term
+12. f_EventHealthy.m - event detection for when a healthy state (B = 1) is reached
+
+
+```matlab
+cd 'Group virtual skin sites'
+
+% Run all three at once
+run run_steady_state_plots('all')
+
+% Or individually
+run run_steady_state_plots(1)  % 1-state patients only
+run run_steady_state_plots(2)  % 2-state patients only
+run run_steady_state_plots(3)  % 3-state patients only
+```
+
+#### Batch Mode
+
+```bash
+# From command line
+matlab -batch "cd('Group virtual skin sites'); run_steady_state_plots('all')"
+```
+
+#### Outputs
+
+- `PatientTypes_1_SteadyState.png` - 8 subplots (different single regions)
+- `PatientTypes_2_SteadyStates.png` - 21 subplots (region pairs)
+- `PatientTypes_3_SteadyStates.png` - Variable subplots (ALL region triplets found in data)
+
+**Key Features**:
+- Plots show SA vs SE phase portraits (log scale)
+- Colors: Green (B* = 1), Red (B* < 1)
+- Automatically detects all unique region combinations
+- Dynamic subplot layout based on data
+
+---
+
+### Stage 4: Analyze Parameter Distributions
 
 **Location**: `Violin plots/`
 
@@ -416,7 +500,7 @@ matlab -batch "cd('Violin plots'); run_violin_analysis('generate_all', true)"
 
 ---
 
-### Stage 4: Treatment Simulations
+### Stage 5: Dual-action treatment strategy
 
 **Location**: `Effect of SA-killing/` and `Effect of dual-action treatment/`
 
