@@ -8,8 +8,6 @@ This repository contains the code for reproducing the results from: "In Silico E
 
 **DOI**: [10.1016/j.xjidi.2024.100269](https://doi.org/10.1016/j.xjidi.2024.100269)
 
----
-
 ## 📋 Table of Contents
 
 1. [Quick Start](#-quick-start)
@@ -21,8 +19,6 @@ This repository contains the code for reproducing the results from: "In Silico E
 7. [Citation](#-citation)
 8. [Contact](#-contact)
 9. [License](#-license)
-
----
 
 ## 🚀 Quick Start
 
@@ -61,9 +57,9 @@ run run_SteadyStates.m
 
 **Output**: `AllVirtualPatientTypes_latest.csv` 
 - Contains 1 million virtual skin sites with steady states analysed
-- Each site includes 17 sampled parameters (where A_max and E_max are fixed) and 9 computed values (steady states, eigenvalues, region classification)
+- Each row contains 26 columns: patient ID, number of steady states, 17 sampled parameters (A<sub>max</sub> and E<sub>max</sub> are fixed at default values), and 7 computed values (3 steady state values, 3 eigenvalues, 1 region classification).
 
-**More info**: See [Data Specifications](#📊-data-specifications) for complete 26-column description and region classification rules.
+**More info**: Please refer to [Data Specifications](#📊-data-specifications) for the complete 26 column description and region classification rules.
 
 ---
 
@@ -76,7 +72,7 @@ cd '../Group virtual skin sites'
 run run_patient_types.m
 ```
 
-**Outputs**: Phase portraits showing SA (x-axis) vs SE (y-axis) populations at steady state, colored by barrier integrity (yellow for B* = 1, red for B* < 1)
+**Outputs**: Phase portraits showing SA (x-axis) vs SE (y-axis) populations at steady state, colored by barrier integrity (yellow = undamaged, red = damaged)
 
 - `PatientTypes_1_SteadyState.png` - Sites with 1 steady state (8 subplots)
 - `PatientTypes_2_SteadyStates.png` - Sites with 2 steady states (21 subplots)
@@ -88,7 +84,7 @@ run run_patient_types.m
 
 ---
 
-#### Step 3: Treatment Simulations → Figure 3, Supp. Figures S2-S3
+#### Step 3: Treatment Simulations → Figure 3b-d, Supplementary Figures S2-S3
 ```matlab
 % Navigate to SA-killing treatment folder
 cd '../Effect of SA-killing'
@@ -101,13 +97,13 @@ run run_example_site.m % generates Figure S3 in supplementary materials
 
 **Outputs**:
 
-**Treatment strength varied between X-Y days^[-1] and X-Y days**
-- `Fig3_AllSites.png` - Treatment response for all virtual skin sites with damaged skin state
+**Treatment strength varied between 0-5 days<sup>-1</sup> and 1-4 days**
+- `Fig3_AllSites.png` - Treatment response for all virtual skin sites with a damaged skin state
 - `Fig3_Irreversible.png` - Treatment response for irreversible sites
 - `Fig3_Reversible.png` - Treatment response for reversible sites
 
-**Treatment strength varied between X-Y days and X-Y days**
-- `FigS2_AllSites.png` - Treatment response for all virtual skin sites with damaged skin state
+**Treatment strength varied between 0-10 days<sup>-1</sup> and 2-50 days**
+- `FigS2_AllSites.png` - Treatment response for all virtual skin sites with a damaged skin state
 - `FigS2_Irreversible.png` - Treatment response for irreversible sites
 - `FigS2_Reversible.png` - Treatment response for reversible sites
 
@@ -116,9 +112,9 @@ run run_example_site.m % generates Figure S3 in supplementary materials
 - `ExampleSite_TreatmentResponse.png` - Treatment response for one example virtual skin site
 
 **Figures**:
-- **Figure 3b - d**: `Fig3_AllSites.png`, `Fig3_Irreversible.png`, and `Fig3_Reversible.png`
-- **Supplementary Figure S2**: `FigS2_AllSites.png`, `FigS2_Irreversible.png`, and `FigS2_Reversible.png`
-- **Supplementary Figure S3**: `ExampleSite_PhasePortrait.png` and `ExampleSite_TreatmentResponse.png`
+- **Figure 3b-d**: (b) `Fig3_AllSites.png`, (c) `Fig3_Irreversible.png`, and (d) `Fig3_Reversible.png`
+- **Supplementary Figure S2**: (a) `FigS2_AllSites.png`, (b) `FigS2_Irreversible.png`, and (c) `FigS2_Reversible.png`
+- **Supplementary Figure S3**: (a) `ExampleSite_PhasePortrait.png` and (b) `ExampleSite_TreatmentResponse.png`
 
 ---
 
@@ -131,7 +127,7 @@ cd '../Violin plots'
 run run_violin_analysis('generate_all', true)
 ```
 
-**Outputs**: Violin plots comparing 15 parameter distributions (A<sub>max</sub> and E<sub>max</sub> are fixed at 1.11×10⁹) across patient types (Asymptomatic, Reversible, Irreversible)
+**Outputs**: Violin plots comparing 15 parameter distributions (A<sub>max</sub> and E<sub>max</sub> are fixed at 1.11×10⁹) across patient types (asymptomatic, reversible, irreversible)
 
 - `ViolinPlots_all.png` - All virtual skin sites
 - `ViolinPlots_damage.png` - Only sites with skin-damaging SE strains (δ<sub>BE</sub> > 0)
@@ -145,7 +141,7 @@ run run_violin_analysis('generate_all', true)
 
 ---
 
-#### Step 5: Proposed Treatment Strategy → Figure 5, Supp. Figure S6
+#### Step 5: Proposed Treatment Strategy → Figure 5, Supplementary Figure S6
 ```matlab
 % Navigate to dual-action treatment folder
 cd '../Effect of dual-action treatment'
@@ -167,28 +163,29 @@ run run_Supplementary_b-d.m
 - **Supplementary Figure S5a**: Parameter distributions for damaging SE strains (from `ViolinPlots_damage.png`)
 - **Supplementary Figure S5b**: Parameter distributions for non-damaging SE strains (from `ViolinPlots_no_damage.png`)
 
----
-
-## 🎨 Figure Generation
+## 🎨 Summary for Figure Generation
 
 ### Main Text Figures
 
 | Figure | Scripts | Folder | Description |
 |--------|---------|--------|-------------|
-| **Figure 2** | `run_steady_state_plots.m` | Group virtual skin sites | Phase portraits by steady state count |
-| **Figure 3** | `run_violin_analysis.m` | Violin plots | Parameter distributions by patient type |
-| **Figure 4** | [TBD] | Effect of SA-killing treatment | Treatment response analysis |
-| **Figure 5** | [TBD] | Effect of dual-action treatment | Treatment response analysis |
+| **Figure 2** | `run_steady_state_plots.m` | Group virtual skin sites | Illustration of three types of virtual skin sites defined by whether the stable skin state converged to undamaged or damaged |
+| **Figure 3b-d** | `run_SA_killing_main.m` | Effect of SA-killing | Proportion of all damaged skin sites that recover to an undamaged skin state |
+| **Figure 4a** | `run_violin_analysis.m` | Violin plots | Parameter distributions by patient type |
+| **Figure 5b-d** | `run_DA_main.m` | Effect of dual-action treatment | Proportion of all damaged skin sites that recover to an undamaged skin state |
 
 ### Supplementary Figures
 
 | Figure | Scripts | Folder | Description |
 |--------|---------|--------|-------------|
-| **Figure S1** | `run_steady_state_plots.m` | Group virtual skin sites | All 3-state combinations |
-| **Figure S2-S10** | [TBD] | Various | Additional analyses |
+| **Figure S1** | `run_steady_state_plots.m` | Group virtual skin sites | Phase portraits by steady state count |
+| **Figure S2** | `run_SA_killing_supp.m` | Effect of SA-killing | Success of SA-killing for longer and stronger treatments |
+| **Figure S3** | `run_example_site.m` | Effect of SA-killing | SA-killing applied to one example skin site |
+| **Figure S4** | `run_violin_analysis.m` | Violin plots | Distribution of parameters driving asymptomatic, reversible, and irreversible skin sites |
+| **Figure S5** | `run_violin_analysis.m` | Violin plots | Distribution of parameters for sites with (a) non-damaging and (b) damaging SE strains |
+| **Figure S6a** | `run_...m` | Effect of dual-action treatment | Recovery of damaged skin sites when fixed duration (2 days) and strength (3 days<sup>-1</sup>) of SA-killing is applied, but SA and SE growth attenuations are varied |
+| **Figure S6b-d** | `run_DA_supplementary.m` | Effect of dual-action treatment | Percentage of sites that gain a non-damaged state when SA and SE growth attenuation is enhanced by different strengths |
 
-
----
 
 ## 📁 Repository Structure
 
@@ -252,16 +249,14 @@ SASE-model/
 - **`f_*.m`** - **Function** definitions (helper functions)
 - **`run_*.m`** - **Runner** scripts (orchestrate workflows)
 
----
-
 ## 🔄 Complete Workflow
 
 ### Overview
 
-The analysis pipeline consists of four main stages:
+The analysis pipeline consists of five main stages:
 
 ```
-[1] Generate & Classify → [2] Visualize Steady States → [3] Analyze Parameters → [4] Simulate Treatments
+[1] Generate & classify → [2] Visualise steady states → [3] Simulate effect of SA-killing treatment → [4] Analyse parameter distributions → [5] Simulate dual-action treatment
 ```
 
 ---
@@ -329,174 +324,221 @@ run g_ClassificationFiles.m
   - `irreversible.csv` - Irreversible patients
 - **Description**: Separates patients into three CSV files for violin plot analysis
 
----
-
-### Stage 2: Visualize by Number of Steady States
+## Stage 2: Visualise Virtual Skin Sites by Steady State Count
 
 **Location**: `Group virtual skin sites/`
 
-**Purpose**: Visualize virtual skin sites organized by how many steady states they have (1, 2, or 3), regardless of barrier status.
+**Purpose**: Generate phase portrait plots of virtual skin sites organised by the number of stable steady states they possess. Creates figures showing SA vs SE populations at steady state, grouped by region combinations and colored by barrier integrity status (red = damaged, yellow = undamaged).
 
-#### Interactive Use
+### File Organisation:
 
-```matlab
-cd 'Group virtual skin sites'
+### 🚀 Main Runner Script (Single Entry Point)
 
-% Run all three at once
-run run_steady_state_plots('all')
+| Usage | Purpose | Outputs |
+|-------|---------|---------|
+| **`run_patient_types.m`** | Generate all steady state visualizations | All CSV files and PNG figures |
 
-% Or individually
-run run_steady_state_plots(1)  % 1-state patients only
-run run_steady_state_plots(2)  % 2-state patients only
-run run_steady_state_plots(3)  % 3-state patients only
+### 🔧 Core Analysis Functions (Called Automatically)
+
+| Function | Purpose | Used By |
+|----------|---------|---------|
+| **`g_PatientTypes_1.m`** | Generate patient visualisations for patients with 1 steady state<br/>**Input**: `AllVirtualPatientTypes_latest.csv`<br/>**Output**: `PatientTypes_1_SteadyState.png` (8 region categories) | `run_patient_types.m` |
+| **`g_PatientTypes_2.m`** | Generate patient visualisations for patients with 2 steady states<br/>**Input**: `AllVirtualPatientTypes_latest.csv`<br/>**Output**: `PatientTypes_2_SteadyStates.png` (21 region combinations) | `run_patient_types.m` |
+| **`g_PatientTypes_3.m`** | Generate patient visualisations for patients with 3 steady states<br/>**Input**: `AllVirtualPatientTypes_latest.csv`<br/>**Output**: `PatientTypes_3_SteadyStates.png` (19 region combinations) | `run_patient_types.m` |
+
+### Workflow:
+
+```
+Prerequisites:
+├── ../Analyse steady states/data/AllVirtualPatientTypes_latest.csv ✅ 
+
+Complete Workflow:
+run_patient_types.m
+├── Step 1: g_PatientTypes_1.m
+│   ├── Filter patients with 1 steady state → data/One_StableState.csv
+│   ├── Group by 8 region categories (1,2,3,4,5,6,7,8/9)
+│   └── Generate 2×4 subplot figure → figures/PatientTypes_1_SteadyState.png
+│
+├── Step 2: g_PatientTypes_2.m
+│   ├── Filter patients with 2 steady states → data/Two_StableStates.csv
+│   ├── Group by region combinations (21 pairs in total)
+│   └── Generate multi-subplot figure → figures/PatientTypes_2_SteadyStates.png
+│
+└── Step 3: g_PatientTypes_3.m
+    ├── Filter patients with 3 steady states → data/Three_StableStates.csv
+    ├── Group by all detected region combinations (19 region combinations)
+    └── Generate dynamic subplot figure → figures/PatientTypes_3_SteadyStates.png
 ```
 
-#### Batch Mode
+### Output Files:
 
-```bash
-# From command line
-matlab -batch "cd('Group virtual skin sites'); run_steady_state_plots('all')"
-```
+### Data Files (Intermediate Processing)
+- `data/One_StableState.csv` - Patients with exactly 1 stable steady state (asymptomatic or irreversible)
+- `data/Two_StableStates.csv` - Patients with exactly 2 stable steady states (reversible or irreversible)
+- `data/Three_StableStates.csv` - Patients with exactly 3 stable steady states (always reversible)
 
-#### Outputs
+### Figure Files
+- `figures/PatientTypes_1_SteadyState.png` - Supplementary: Single steady state phase portraits (Supplementary Figure S1, 8 subplots)
+- `figures/PatientTypes_2_SteadyStates.png` - Supplementary: Two steady state combinations (Supplementary Figure S1, 21 subplots)  
+- `figures/PatientTypes_3_SteadyStates.png` - Supplementary: Three steady state combinations (Supplementary Figure S1, variable subplots)
 
-- `PatientTypes_1_SteadyState.png` - 8 subplots (different single regions)
-- `PatientTypes_2_SteadyStates.png` - 21 subplots (region pairs)
-- `PatientTypes_3_SteadyStates.png` - Variable subplots (ALL region triplets found in data)
-
-**Key Features**:
-- Plots show SA vs SE phase portraits (log scale)
-- Colors: Green (B* = 1), Red (B* < 1)
-- Automatically detects all unique region combinations
-- Dynamic subplot layout based on data
-
----
-
-### Stage 3: Apply SA-killing treatment
+## Stage 3: Apply SA-killing treatment
 
 **Location**: `Effect of SA-killing/`
 
 **Purpose**: Analyse SA-killing treatment effectiveness on virtual patients with damaged skin barrier. Focuses specifically on reversible and irreversible skin sites.
 
-#### 📁 File organisation:
+### File Organisation:
 
-#### 🚀 Main runner scripts (Entry Points)
-1. run_main.m
-  - Purpose: Generate Figure 3b-d (main text)
-  - Parameters: Strength 0-5, Duration 1-4 days
-  - Outputs: Fig3_AllSites.png, Fig3_Reversible.png, Fig3_Irreversible.png
-2. run_supplementary.m
-  - Purpose: Generate Supplementary Figure S2 (supplementary)
-  - Parameters: Strength 0-10, Duration 2-50 days
-  - Outputs: FigS2_AllSites.png, FigS2_Reversible.png, FigS2_Irreversible.png
-3. run_supplementary_example_site.m
-  - Purpose: Generate Supplementary Figure S3 (supplementary)
-  - Parameters: ... (!!!)
-  - Outputs: FigS3_PhasePortrait.png, FigS3_TreatmentResponse.png
+### 🚀 Main Runner Scripts (Entry Points)
 
-#### 🔧 Core analysis functions (called automatically by main scripts)
-4. g_ExtractInitialConditions.m
-  - Purpose: Extract worst-case initial conditions for treatment simulations (see Materials and Methods in paper)
-  - Used by: run_main.m, run_supplementary.m
-5. g_TreatmentResponse.m
-  - Purpose: Run SA-killing treatment grid simulations
-  - Input: data/reversible_SAkilling.csv
-  - Output: data/reversible_treatment_results.csv
+| Script | Purpose | Parameters | Outputs |
+|--------|---------|------------|---------|
+| **`run_main.m`** | Generate Figure 3b-d | Strength 0-5, Duration 1-4 days | `Fig3_AllSites.png`, `Fig3_Reversible.png`, `Fig3_Irreversible.png` |
+| **`run_supplementary.m`** | Generate Supplementary Figure S2 | Strength 0-10, Duration 2-50 days | `FigS2_AllSites.png`, `FigS2_Reversible.png`, `FigS2_Irreversible.png` |
+| **`run_supplementary_example_site.m`** | Generate Supplementary Figure S3 | Single patient analysis | `FigS3_PhasePortrait.png`, `FigS3_TreatmentResponse.png` |
 
-#### 📊 Visualisation functions (called automatically by main scripts)
-6. g_Plot_Main.m
-  - Purpose: Generate main text heatmaps with contour lines (Figure 3b-d)
-  - Used by: run_main.m
-7. g_Plot_Supplementary.m
-  - Purpose: Generate supplementary heatmaps with exact values
-  - Used by: run_supplementary.m
-8. g_VisualiseExampleSites.m
-  - Purpose: Generate phase portrait plot (Supplementary Figure S3a)
-  - Used by: run_supplementary_example_site.m
-9. g_ExampleSiteAnalysis.m
-  - Purpose: Generate treatment response plot for a single patient (Supplementary Figure S3b)
-  - Used by: run_supplementary_example_site.m
+### 🔧 Core Analysis Functions (Called Automatically)
 
-#### ⚙️ Mathematical functions (called automatically by main scripts)
-10. f_defineODEs.m - ODEs defining mathematical model
-11. f_defineODEs_SAkilling.m - ODEs with SA-killing term
-12. f_EventHealthy.m - event detection for when a healthy state (B = 1) is reached
+| Function | Purpose | Used By |
+|----------|---------|---------|
+| **`g_ExtractInitialConditions.m`** | Extract worst-case initial conditions for treatment simulations (see Materials and Methods in paper) | `run_main.m`, `run_supplementary.m` |
+| **`g_TreatmentResponse.m`** | Run SA-killing treatment grid simulations<br/>**Input**: `data/reversible_SAkilling.csv`<br/>**Output**: `data/reversible_treatment_results_[suffix].csv`<br/>*Suffix: 'main' or 'supp' to prevent overwriting* | `run_main.m`, `run_supplementary.m` |
 
+### 📊 Visualisation Functions (Called Automatically)
 
-```matlab
-cd 'Group virtual skin sites'
+| Function | Purpose | Used By |
+|----------|---------|---------|
+| **`g_Plot_Main.m`** | Generate main text heatmaps with contour lines (Figure 3b-d) | `run_main.m` |
+| **`g_Plot_Supplementary.m`** | Generate supplementary heatmaps with exact values (Supplementary Figure S2) | `run_supplementary.m` |
+| **`g_VisualiseExampleSites.m`** | Generate phase portrait plot (Supplementary Figure S3a) | `run_supplementary_example_site.m` |
+| **`g_ExampleSiteAnalysis.m`** | Generate treatment response plot for a single patient (Supplementary Figure S3b) | `run_supplementary_example_site.m` |
 
-% Run all three at once
-run run_steady_state_plots('all')
+### ⚙️ Mathematical Functions (Called Automatically)
 
-% Or individually
-run run_steady_state_plots(1)  % 1-state patients only
-run run_steady_state_plots(2)  % 2-state patients only
-run run_steady_state_plots(3)  % 3-state patients only
+| Function | Purpose |
+|----------|---------|
+| **`f_defineODEs.m`** | ODEs defining mathematical model |
+| **`f_defineODEs_SAkilling.m`** | ODEs with SA-killing term |
+| **`f_EventHealthy.m`** | Event detection for when a healthy state (B* = 1) is reached |
+
+### Workflow:
+
+```
+Prerequisites:
+├── ../Analyse steady states/data/reversible.csv ✅ 
+├── ../Analyse steady states/data/irreversible.csv ✅ 
+
+Main Text Workflow (Figure 3b-d):
+run_main.m
+├── g_ExtractInitialConditions.m → data/reversible_SAkilling.csv, data/irreversible_SAkilling.csv
+├── g_TreatmentResponse.m → data/reversible_treatment_results.csv
+└── g_Plot_Main.m → figures/Fig3_AllSites.png, Fig3_Reversible.png, Fig3_Irreversible.png
+
+Supplementary Workflow (Figure S2):
+run_supplementary.m  
+├── [Same extraction and treatment steps with different parameters]
+└── g_Plot_Supplementary.m → figures/FigS2_AllSites.png, FigS2_Reversible.png, FigS2_Irreversible.png
+
+Example Site Workflow (Figure S3):
+run_supplementary_example_site.m
+├── g_VisualiseExampleSites.m → figures/FigS3_PhasePortrait.png
+└── g_ExampleSiteAnalysis.m → figures/FigS3_TreatmentResponse.png
 ```
 
-#### Batch Mode
+### Output Files:
 
-```bash
-# From command line
-matlab -batch "cd('Group virtual skin sites'); run_steady_state_plots('all')"
-```
+### Data Files
+- `data/reversible_SAkilling.csv` - Initial conditions for reversible patients
+- `data/irreversible_SAkilling.csv` - Initial conditions for irreversible patients
+- `data/reversible_treatment_results.csv` - Treatment simulation results grid
+- `data/example_site_results.csv` - Single patient detailed analysis results
 
-#### Outputs
+### Figure Files
+- `figures/Fig3_AllSites.png` - Main text: Combined treatment response heatmap
+- `figures/Fig3_Reversible.png` - Main text: Reversible patients treatment response
+- `figures/Fig3_Irreversible.png` - Main text: Irreversible patients treatment response
+- `figures/FigS2_AllSites.png` - Supplementary: Extended parameter range heatmap (combined)
+- `figures/FigS2_Reversible.png` - Supplementary: Extended parameter range (reversible)
+- `figures/FigS2_Irreversible.png` - Supplementary: Extended parameter range (irreversible)
+- `figures/FigS3_PhasePortrait.png` - Supplementary: Single patient phase portrait
+- `figures/FigS3_TreatmentResponse.png` - Supplementary: Single patient treatment response
 
-- `PatientTypes_1_SteadyState.png` - 8 subplots (different single regions)
-- `PatientTypes_2_SteadyStates.png` - 21 subplots (region pairs)
-- `PatientTypes_3_SteadyStates.png` - Variable subplots (ALL region triplets found in data)
-
-**Key Features**:
-- Plots show SA vs SE phase portraits (log scale)
-- Colors: Green (B* = 1), Red (B* < 1)
-- Automatically detects all unique region combinations
-- Dynamic subplot layout based on data
-
----
-
-### Stage 4: Analyze Parameter Distributions
+## Stage 4: Analyse Parameter Distributions
 
 **Location**: `Violin plots/`
 
-**Purpose**: Compare parameter distributions across asymptomatic, reversible, and irreversible patient types.
+**Purpose**: Visualise parameter distributions across different patient types using violin plots. Provides three distinct filtering modes to examine how 15 model parameters vary between asymptomatic, reversible, and irreversible patient groups with a focus on SE strain characteristics.
 
-#### Interactive Use
+### File Organisation:
 
-```matlab
-cd 'Violin plots'
+### 🚀 Main Runner Scripts (Single Entry Point)
 
-% Interactive mode (prompts for choices)
-run run_violin_analysis()
+| Usage | Purpose | Parameters | Outputs |
+|--------|---------|------------|---------|
+| **`run_violin_analysis()`** | Interactive mode with guided prompts | User prompts for mode and CSV options | Selected analysis based on user choice |
+| **`run_violin_analysis('all')`** | Generate Figures 4a and S4 | All patients, 15 parameters | `ViolinPlots_all.png` |
+| **`run_violin_analysis('SE_damaging')`** | Generate Supplementary Figure S5a | SE-damaging strains only (δ_BE > 0) | `ViolinPlots_SE_damaging.png` |
+| **`run_violin_analysis('SE_nondamaging')`** | Generate Supplementary Figure S5b | SE-nondamaging strains only (δ_BE = 0) | `ViolinPlots_SE_nondamaging.png` |
+| **`run_violin_analysis('generate_all')`** | Generate all figures at once | All three analysis modes | All three PNG files |
 
-% Direct specification
-run run_violin_analysis('all', false)        % All patients
-run run_violin_analysis('damage', false)     % Only with damage
-run run_violin_analysis('no_damage', false)  % Only without damage
-run run_violin_analysis('generate_all')      % All three versions
+### 🔧 Core Analysis Functions (Called Automatically)
+
+| Function | Purpose | Used By |
+|----------|---------|---------|
+| **`g_violin_plot.m`** | Core plotting function with SE strain filtering<br/>**Input**: `../Analyse steady states/data/*.csv`<br/>**Output**: Violin plots | All `run_violin_analysis` modes |
+| **`prepare_parameter_data()`** | Helper function to format data for violin plots<br/>Handles log transformation and NaN padding for unequal group sizes | `g_violin_plot.m` |
+
+### 📊 Violin Plot Implementation (Called Automatically)
+
+| Function | Purpose | Used By |
+|----------|---------|---------|
+| **`violinplot.m`** | User-friendly wrapper for creating violin plots with customization options. Downloaded from Holger Hoffmann (2025). Violin Plot (https://www.mathworks.com/matlabcentral/fileexchange/45134-violin-plot), MATLAB Central File Exchange. Retrieved October 17, 2025. | `g_violin_plot.m` |
+| **`Violin.m`** | Downloaded from Holger Hoffmann (2025). Violin Plot (https://www.mathworks.com/matlabcentral/fileexchange/45134-violin-plot), MATLAB Central File Exchange. Retrieved October 17, 2025. | `violinplot.m` |
+
+### ⚙️ Data Management Functions (Called Automatically)
+
+| Function | Purpose |
+|----------|---------|
+| **`g_ClassificationFiles.m`** | Generates asymp.csv, reversible.csv, irreversible.csv from AllVirtualPatientTypes_latest.csv |
+
+### Workflow:
+
+```
+Prerequisites:
+├── ../Analyse steady states/data/AllVirtualPatientTypes_latest.csv ✅ 
+├── ../Analyse steady states/g_ClassificationFiles.m ✅ 
+
+Interactive Workflow:
+run_violin_analysis()
+├── Check for CSV files → Generate if missing via g_ClassificationFiles.m
+├── User selects analysis mode (1-4)
+└── g_violin_plot(mode) → figures/ViolinPlots_[mode].png
+
+Batch Workflow (All figures):
+run_violin_analysis('generate_all')
+├── Check/generate CSV files automatically
+├── g_violin_plot('all') → figures/ViolinPlots_all.png
+├── g_violin_plot('SE_damaging') → figures/ViolinPlots_SE_damaging.png
+└── g_violin_plot('SE_nondamaging') → figures/ViolinPlots_SE_nondamaging.png
+
+Single Mode Workflow:
+run_violin_analysis('all', false)
+├── Use existing CSV files (no regeneration)
+└── g_violin_plot('all') → figures/ViolinPlots_all.png
 ```
 
-#### Batch Mode
+### Output Files:
 
-```bash
-# From command line - generate all three versions
-matlab -batch "cd('Violin plots'); run_violin_analysis('generate_all', true)"
-```
+### Data Files (Auto-generated if missing)
+- `../Analyse steady states/data/asymp.csv` - Asymptomatic patient parameters (all steady states have B* = 1)
+- `../Analyse steady states/data/reversible.csv` - Reversible patient parameters (mixed B* = 1 and B* < 1 states)
+- `../Analyse steady states/data/irreversible.csv` - Irreversible patient parameters (all steady states have B* < 1)
 
-#### Outputs
-
-**With Statistics Toolbox**:
-- `ViolinPlots_all.png` - All patients (violin plots)
-- `ViolinPlots_damage.png` - Only with skin-damaging SE (δ_BE > 0)
-- `ViolinPlots_no_damage.png` - Only without skin-damaging SE (δ_BE = 0)
-
-**Without Statistics Toolbox** (automatic fallback):
-- `ParameterPlots_all.png` - All patients (box plots)
-- `ParameterPlots_damage.png` - Only with damage
-- `ParameterPlots_no_damage.png` - Only without damage
-
-**Parameters Shown**: 15 model parameters compared across Asymptomatic (orange), Reversible (gray), and Irreversible (red) patient types.
+### Figure Files
+- `figures/ViolinPlots_all.png` - Main text: Complete parameter comparison across all patient types (Figure 4a source)
+- `figures/ViolinPlots_SE_damaging.png` - Supplementary: SE-damaging strain analysis (Supplementary Figure S5a)
+- `figures/ViolinPlots_SE_nondamaging.png` - Supplementary: SE-non-damaging strain analysis (Supplementary Figure S5b)
 
 ---
 
