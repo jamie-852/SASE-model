@@ -12,7 +12,7 @@
 %            steady states for the patient, not just one from reversible_SAkilling.csv
 %
 % Inputs:  ../Analyse steady states/data/AllVirtualPatientTypes_latest.csv
-% Outputs: figures/ExampleSite_PhasePortrait.png
+% Outputs: figures/FigureS3_PhasePortrait.png
 %
 % Usage:
 %   g_VisualiseExampleSite()           % Visualise patient ID 289986
@@ -88,7 +88,7 @@ function g_VisualiseExampleSite(patient_id)
     output_folder = 'figures';
     mkdir(output_folder);
     
-    output_file = fullfile(output_folder, 'ExampleSite_PhasePortrait.png');
+    output_file = fullfile(output_folder, 'FigureS3_PhasePortrait.png');
     print(fig, output_file, '-dpng', '-r300');
     
     fprintf('  ✓ Saved: %s\n', output_file);

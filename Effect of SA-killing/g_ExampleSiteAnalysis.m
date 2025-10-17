@@ -10,7 +10,7 @@
 % IMPORTANT: Looks up patient by ID (column 1), not by row index
 %
 % Inputs:  data/reversible_SAkilling.csv
-% Outputs: figures/ExampleSite_TreatmentResponse.png
+% Outputs: figures/FigureS3_TreatmentResponse.png
 %          data/example_site_results.csv
 %
 % Usage:
@@ -267,7 +267,7 @@ function create_treatment_heatmap(treatment_output, config, patient_id)
         'HorizontalAlignment', 'center');
     
     % Save figure
-    output_file = fullfile(output_folder, 'ExampleSite_TreatmentResponse.png');
+    output_file = fullfile(output_folder, 'FigureS3_TreatmentResponse.png');
     print(fig, output_file, '-dpng', '-r300');
     
     close(fig);
