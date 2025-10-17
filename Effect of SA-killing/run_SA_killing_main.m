@@ -13,7 +13,7 @@
 %   - figures/Figure3_Irreversible.png
 %
 % Usage:
-%   matlab -batch "run('run_main.m')"
+%   matlab -batch "run('run_SA_killing_main.m')"
 %
 % Author: Jamie Lee
 % Date: 11 October 2025
