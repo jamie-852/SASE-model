@@ -4,19 +4,18 @@
 %          Tests combinations of treatment strength and duration
 %
 % Inputs:  data/reversible_SAkilling.csv (initial conditions)
-% Outputs: data/reversible_treatment_results.csv
+% Outputs: data/reversible_treatment_results_[suffix].csv
 %
 % Usage:
-%   g_TreatmentResponse()                    % Default: strength 0-5, duration 1-4
-%   g_TreatmentResponse(0, 1, 5, 1, 0.5, 4)  % Custom ranges (main text)
-%   g_TreatmentResponse(0, 2.5, 10, 2, 12, 50) % Supplementary Figure ranges
+%   g_TreatmentResponse()                          % Default: strength 0-5, duration 1-4, output: main
+%   g_TreatmentResponse(0, 2, 10, 2, 2, 50, 'supp') % Custom ranges for supplementary figures (Figure S2)
 %
 % Author: Jamie Lee
 % Date: 10 October 2025
-% Version: 2.0 - Refactored for reproducibility
+% Version: 2.1 - Added output filename parameter to prevent overwriting
 
 function g_TreatmentResponse(delta_AS_start, delta_AS_step, delta_AS_end, ...
-                              t_end_start, t_end_step, t_end_end)
+                              t_end_start, t_end_step, t_end_end, output_suffix)
     
     clc;
     fprintf('=== SA-Killing Treatment Response Analysis ===\n\n');
@@ -32,14 +31,20 @@ function g_TreatmentResponse(delta_AS_start, delta_AS_step, delta_AS_end, ...
         t_end_end       = 4;    % Treatment duration end (days)
     end
     
+    % Default output suffix
+    if nargin < 7 || isempty(output_suffix)
+        output_suffix = 'main';  % Default for main text figures
+    end
+    
     fprintf('Treatment parameter ranges:\n');
     fprintf('  Strength: %.1f to %.1f (step %.1f)\n', delta_AS_start, delta_AS_end, delta_AS_step);
-    fprintf('  Duration: %.1f to %.1f days (step %.1f)\n\n', t_end_start, t_end_end, t_end_step);
+    fprintf('  Duration: %.1f to %.1f days (step %.1f)\n', t_end_start, t_end_end, t_end_step);
+    fprintf('  Output suffix: %s\n\n', output_suffix);
     
     %% Setup paths
     input_file = 'data/reversible_SAkilling.csv';
     output_folder = 'data';
-    output_file = fullfile(output_folder, 'reversible_treatment_results.csv');
+    output_file = fullfile(output_folder, sprintf('reversible_treatment_results_%s.csv', output_suffix));
     
     % Ensure output folder exists
     if ~exist(output_folder, 'dir')
