@@ -1,13 +1,9 @@
 % run_violin_analysis.m
 %
 % Purpose: Runner script for violin plot analysis
-%          Works in both interactive and batch modes
 %
 % Usage:
-%   Interactive MATLAB:
-%       run_violin_analysis()  % Will prompt for choices
-%
-%   Batch mode:
+%       run_violin_analysis()                           % Default: all patients, no regenerate
 %       run_violin_analysis('all', false)               % All patients, no regenerate
 %       run_violin_analysis('SE_damaging', true)        % With damage, regenerate CSVs
 %       run_violin_analysis('SE_nondamaging', false)    % Without damage
@@ -15,40 +11,26 @@
 %
 % Arguments:
 %   mode: 'all', 'SE_damaging', 'SE_nondamaging', or 'generate_all' (default: 'all')
-%   regenerate_csv: true/false (default: false in batch, prompt in interactive)
+%   regenerate_csv: true/false (default: false)
 %
 % Author: Jamie Lee
 % Date: 7 October 2025
 
 function run_violin_analysis(mode, regenerate_csv)
     
-    % Detect if running in batch mode
-    is_batch = usejava('desktop') == 0;
-    
     % Set defaults
     if nargin < 1
-        if is_batch
-            mode = 'all';
-        else
-            mode = [];  % Will prompt
-        end
+        mode = 'all';
     end
     
     if nargin < 2
-        if is_batch
-            regenerate_csv = false;
-        else
-            regenerate_csv = [];  % Will prompt
-        end
+        regenerate_csv = false;
     end
     
     clc;
     
     fprintf('\n========================================\n');
     fprintf('  VIOLIN PLOT ANALYSIS - RUNNER\n');
-    if is_batch
-        fprintf('  (Running in batch mode)\n');
-    end
     fprintf('========================================\n\n');
     
     %% Step 1: Check for/Generate CSV files
@@ -64,55 +46,19 @@ function run_violin_analysis(mode, regenerate_csv)
         fprintf('  CSV files not found. Generating them now...\n\n');
         run('../Analyse steady states/g_classification_csvs.m');
         
-    elseif isempty(regenerate_csv)
-        % Interactive mode - ask user
-        fprintf('  ✓ CSV files found\n');
-        response = input('  Regenerate CSV files? (y/n): ', 's');
-        if strcmpi(response, 'y')
-            fprintf('\n');
-            run('../Analyse steady states/g_classification_csvs.m');
-        end
-        
     elseif regenerate_csv
-        % Batch mode - regenerate requested
+        % Regenerate requested
         fprintf('  ✓ CSV files found\n');
         fprintf('  Regenerating CSV files (as requested)...\n\n');
         run('../Analyse steady states/g_classification_csvs.m');
         
     else
-        % Batch mode - use existing files
+        % Use existing files
         fprintf('  ✓ CSV files found (using existing)\n');
     end
     
     %% Step 2: Choose plotting mode
-    if isempty(mode)
-        % Interactive mode - prompt user
-        fprintf('\nStep 2: Select violin plot mode:\n');
-        fprintf('  1. All patients (original behavior)\n');
-        fprintf('  2. Only patients WITH skin damaging SE strains (delta_BE > 0)\n');
-        fprintf('  3. Only patients WITHOUT skin damaging SE strains (delta_BE = 0)\n');
-        fprintf('  4. Generate all three versions\n');
-        
-        choice = input('Enter choice (1-4): ', 's');
-        fprintf('\n');
-        
-        switch choice
-            case '1'
-                mode = 'all';
-            case '2'
-                mode = 'SE_damaging';
-            case '3'
-                mode = 'SE_nondamaging';
-            case '4'
-                mode = 'generate_all';
-            otherwise
-                fprintf('Invalid choice. Running default (all)...\n\n');
-                mode = 'all';
-        end
-    else
-        % Batch mode - use parameter
-        fprintf('\nStep 2: Using mode: %s\n\n', mode);
-    end
+    fprintf('\nStep 2: Using mode: %s\n\n', mode);
     
     %% Step 3: Generate plots
     switch mode
