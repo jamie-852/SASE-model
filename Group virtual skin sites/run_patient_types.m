@@ -1,6 +1,6 @@
 % run_patient_types.m
 %
-% Runner script to generate all patient type visualizations
+% Runner script to generate all patient type visualisations
 %
 % This script runs g_PatientTypes_1.m, g_PatientTypes_2.m, and g_PatientTypes_3.m
 % to create figures showing virtual skin sites grouped by number of steady states.
@@ -23,7 +23,7 @@
 
 clc;
 fprintf('╔═══════════════════════════════════════════════════════╗\n');
-fprintf('║       Patient Type Visualization Generation          ║\n');
+fprintf('║       Patient Type Visualisation Generation           ║\n');
 fprintf('║         (Steady State Analysis Figures)               ║\n');
 fprintf('╚═══════════════════════════════════════════════════════╝\n\n');
 
@@ -76,7 +76,7 @@ fprintf('\n');
 fprintf('Each script will:\n');
 fprintf('  1. Load/filter data by number of steady states\n');
 fprintf('  2. Group by region combinations\n');
-fprintf('  3. Create visualization with subplots\n');
+fprintf('  3. Create visualisation with subplots\n');
 fprintf('  4. Save figure and filtered data\n');
 fprintf('\n');
 
@@ -143,34 +143,6 @@ fprintf('     Shows region combinations for 2-state patients\n');
 fprintf('\n');
 fprintf('  → figures/PatientTypes_3_SteadyStates.png\n');
 fprintf('     Shows all detected region combinations for 3-state patients\n');
-fprintf('\n');
-
-fprintf('═══ What These Figures Show ═══\n');
-fprintf('\n');
-fprintf('Each subplot displays:\n');
-fprintf('  • Horizontal axis: SA* (S. aureus population, log scale)\n');
-fprintf('  • Vertical axis: SE* (S. epidermidis population, log scale)\n');
-fprintf('  • Dot color: Barrier integrity B* (yellow=undamaged, red=damaged)\n');
-fprintf('  • Title: Region combination and patient count\n');
-fprintf('\n');
-
-fprintf('Key insights:\n');
-fprintf('  • 1 steady state → Asymptomatic OR irreversible patients\n');
-fprintf('  • 2 steady states → Likely reversible (bistable) patients\n');
-fprintf('  • 3 steady states → Definitely reversible (tristable) patients\n');
-fprintf('\n');
-
-fprintf('═══ Understanding Region Numbers ═══\n');
-fprintf('\n');
-fprintf('Regions are defined by quorum sensing thresholds:\n');
-fprintf('  Region 1: No bacteria, healthy skin\n');
-fprintf('  Region 2: Low SA, no SE, healthy\n');
-fprintf('  Region 3/5: Low/high SE only\n');
-fprintf('  Region 4: Low SA, low SE\n');
-fprintf('  Region 5: SE above threshold (can damage barrier)\n');
-fprintf('  Region 6: Low SA, high SE, healthy\n');
-fprintf('  Region 7: High SA, no SE\n');
-fprintf('  Region 8/9: High SA with SE present (merged in plots)\n');
 fprintf('\n');
 
 fprintf('╔═══════════════════════════════════════════════════════╗\n');
