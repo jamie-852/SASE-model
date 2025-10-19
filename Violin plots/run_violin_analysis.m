@@ -44,13 +44,13 @@ function run_violin_analysis(mode, regenerate_csv)
     if ~files_exist
         % Files don't exist - must generate
         fprintf('  CSV files not found. Generating them now...\n\n');
-        run('../Analyse steady states/g_classification_csvs.m');
+        run('../Analyse steady states/g_ClassificationFiles.m');
         
     elseif regenerate_csv
         % Regenerate requested
         fprintf('  ✓ CSV files found\n');
         fprintf('  Regenerating CSV files (as requested)...\n\n');
-        run('../Analyse steady states/g_classification_csvs.m');
+        run('../Analyse steady states/g_ClassificationFiles.m');
         
     else
         % Use existing files

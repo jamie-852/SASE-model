@@ -8,9 +8,9 @@
 %
 % Outputs:
 %   - data/reversible_treatment_results_supp.csv
-%   - figures/FigS2_AllSites.png
-%   - figures/FigS2_Reversible.png
-%   - figures/FigS2_Irreversible.png
+%   - figures/FigureS2_AllSites.png
+%   - figures/FigureS2_Reversible.png
+%   - figures/FigureS2_Irreversible.png
 %
 % Usage:
 %   matlab -batch "run('run_SA_killing_supplementary.m')"
