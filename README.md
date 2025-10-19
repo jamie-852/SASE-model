@@ -30,7 +30,7 @@ This repository contains the code for reproducing the results from: "In Silico E
 **Hardware Recommendations:**
 - **RAM**: 4 GB minimum, 16 GB recommended for full workflow
 - **Storage**: ~5 GB for all data files
-- **Runtime**: ~10 hours for complete analysis (steady state analysis takes ~7 hours)
+- **Runtime**: ~24 hours for complete analysis (steady state analysis takes ~7 hours)
 
 ### Installation
 
