@@ -385,7 +385,7 @@ run_SteadyStates.m
 
 | Usage | Purpose | Outputs |
 |-------|---------|---------|
-| **`run_patient_types.m`** | Generate all steady state visualizations | All CSV files and PNG figures |
+| **`run_patient_types.m`** | Generate all steady state visualisations | All CSV files and PNG figures |
 
 ### 🔧 Core Analysis Functions (Called Automatically)
 
@@ -542,7 +542,7 @@ run_example_supplementary.m
 
 | Function | Purpose | Used By |
 |----------|---------|---------|
-| **`violinplot.m`** | User-friendly wrapper for creating violin plots with customization options. Downloaded from Holger Hoffmann (2025). Violin Plot (https://www.mathworks.com/matlabcentral/fileexchange/45134-violin-plot), MATLAB Central File Exchange. Retrieved October 17, 2025. | `g_violin_plot.m` |
+| **`violinplot.m`** | User-friendly wrapper for creating violin plots with customisation options. Downloaded from Holger Hoffmann (2025). Violin Plot (https://www.mathworks.com/matlabcentral/fileexchange/45134-violin-plot), MATLAB Central File Exchange. Retrieved October 17, 2025. | `g_violin_plot.m` |
 | **`Violin.m`** | Downloaded from Holger Hoffmann (2025). Violin Plot (https://www.mathworks.com/matlabcentral/fileexchange/45134-violin-plot), MATLAB Central File Exchange. Retrieved October 17, 2025. | `violinplot.m` |
 
 ### ⚙️ Data Management Functions (Called Automatically)
