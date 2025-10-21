@@ -1,413 +1,269 @@
 % run_DualAction.m
 %
-% Complete workflow runner for dual-action treatment analysis
-% 
-% This script reproduces Figure 3b-d with attenuation-modified parameters:
-%   1. Apply 20x attenuation to gamma_AB and gamma_EB
-%   2. Extract damaged initial conditions
-%   3. Apply SA-killing treatment (varying strength and duration)
-%   4. Generate treatment response heatmaps
+% Purpose: Dual-action treatment pipeline (20x attenuation + SA-killing)
 %
 % Workflow:
-%   STAGE 1: Attenuation (20x enhancement)
-%   STAGE 2: Extract damaged initial conditions  
-%   STAGE 3: SA-killing treatment simulations
-%   STAGE 4: Generate plots (Figure 3 panels b, c, d)
-%
-% Prerequisites:
-%   - Must have g_ExtractInitialConditions.m in '../Effect of SA-killing/' folder
-%   - Helper functions in '../Analyse steady states/' folder
-%   - ODE solver functions in '../Effect of SA-killing/' folder
+%   1. Apply 20x attenuation to both SA and SE for each patient type
+%   2. Extract damaged sites (regions 5-9) as initial conditions
+%   3. Apply SA-killing treatment to damaged sites
+%   4. Generate heatmap figures of treatment success rates for all sites, reversible sites, and irreversible sites
 %
 % Outputs:
-%   - data/attenuation_[type]_20x.csv
-%   - data/dual_action_reversible_20x_initial.csv
-%   - data/dual_action_irreversible_20x_initial.csv
-%   - data/reversible_treatment_results_dual_action_20x.csv
-%   - figures/Fig3_DualAction_20x_*.png
-%
-% Usage:
-%   matlab -batch "run('run_DualAction.m')"
+%   - data/reversible_SAkilling_post_attenuation.csv
+%   - data/irreversible_SAkilling_post_attenuation.csv
+%   - data/reversible_treatment_results_dual_action.csv
+%   - data/irreversible_treatment_results_dual_action.csv
+%   - figures/Figure5_AllSites.png
+%   - figures/Figure5_Reversible.png
+%   - figures/Figure5_Irreversible.png
 %
 % Author: Jamie Lee
-% Date: 13 October 2025
+% Date: October 20, 2025
 
-clc;
-fprintf('╔═══════════════════════════════════════════════════════╗\n');
-fprintf('║       Complete Dual-Action Treatment Workflow         ║\n');
-fprintf('║          (Attenuation + SA-Killing)                   ║\n');
-fprintf('║                                                       ║\n');
-fprintf('║  Reproduces: Figure 3b-d (with attenuation)          ║\n');
-fprintf('╚═══════════════════════════════════════════════════════╝\n\n');
+clear; clc; close all;
+
+fprintf('╔═══════════════════════════════════════════════════════════════════════╗\n');
+fprintf('║      Dual-Action Treatment Pipeline (20x attenuation + SA-killing)     ║\n');
+fprintf('╚═══════════════════════════════════════════════════════════════════════╝\n\n');
 
 %% Configuration
-fold_change = 20;  % Attenuation enhancement
+fold_change = 20;  % 20x attenuation for both SA and SE
+patient_types = {'reversible', 'irreversible'};
 
-fprintf('═══ Configuration ═══\n');
-fprintf('Attenuation fold: %dx\n', fold_change);
-fprintf('Treatment parameter ranges (matching Figure 3):\n');
-fprintf('  Strength: 0 to 5 days⁻¹ (step 1.0)\n');
-fprintf('  Duration: 1 to 4 days (step 0.5)\n');
-fprintf('\n');
+% Create output folders
+if ~exist('data', 'dir'), mkdir('data'); end
+if ~exist('figures', 'dir'), mkdir('figures'); end
 
-%% User confirmation
-fprintf('═══ Workflow Overview ═══\n');
-fprintf('This analysis will:\n');
-fprintf('  1. Run attenuation (20x) for irreversible patients\n');
-fprintf('  2. Run attenuation (20x) for reversible patients\n');
-fprintf('  3. Extract damaged initial conditions\n');
-fprintf('  4. Run SA-killing treatment simulations\n');
-fprintf('  5. Generate treatment response heatmaps\n');
-fprintf('\n');
-fprintf('⚠️  Note: Steps 1-2 may take several hours\n');
-fprintf('⚠️  Note: Step 4 may take 1-2 hours\n');
-fprintf('\n');
-fprintf('Press any key to continue or Ctrl+C to cancel...\n');
-pause;
-fprintf('\n');
-
-%% Save original directory
-original_dir = pwd;
-
-%% STAGE 1: Attenuation Treatment
+%% Stage 1: Apply Attenuation
 fprintf('╔═══════════════════════════════════════════════════════╗\n');
-fprintf('║  STAGE 1: Attenuation Treatment (20x)                 ║\n');
+fprintf('║         STAGE 1: Attenuation (20x SA + 20x SE)       ║\n');
 fprintf('╚═══════════════════════════════════════════════════════╝\n\n');
 
-fprintf('--- Running attenuation for irreversible patients ---\n');
-tic;
-g_AttenuationOnly('irreversible', fold_change);
-stage1a_time = toc;
-fprintf('✓ Irreversible complete (%.1f minutes)\n\n', stage1a_time/60);
+attenuation_stats = struct();
 
-fprintf('--- Running attenuation for reversible patients ---\n');
-tic;
-g_AttenuationOnly('reversible', fold_change);
-stage1b_time = toc;
-fprintf('✓ Reversible complete (%.1f minutes)\n\n', stage1b_time/60);
-
-fprintf('✓ STAGE 1 COMPLETE (Total: %.1f minutes)\n\n', (stage1a_time + stage1b_time)/60);
-
-%% STAGE 2: Extract Initial Conditions
-fprintf('╔═══════════════════════════════════════════════════════╗\n');
-fprintf('║  STAGE 2: Extract Damaged Initial Conditions         ║\n');
-fprintf('╚═══════════════════════════════════════════════════════╝\n\n');
-
-fprintf('Calling g_ExtractInitialConditions from SA-killing folder...\n');
-fprintf('Using attenuation outputs as input\n\n');
-
-tic;
-% Call the flexible g_ExtractInitialConditions from SA-killing folder
-% with custom paths pointing to our attenuation outputs
-cd('../Effect of SA-killing');
-
-g_ExtractInitialConditions('../Effect of dual-action treatment/data', ...
-                           '../Effect of dual-action treatment/data', ...
-                           sprintf('attenuation_reversible_%dx.csv', fold_change), ...
-                           sprintf('attenuation_irreversible_%dx.csv', fold_change), ...
-                           sprintf('dual_action_reversible_%dx_initial.csv', fold_change), ...
-                           sprintf('dual_action_irreversible_%dx_initial.csv', fold_change));
-
-cd(original_dir);
-stage2_time = toc;
-
-fprintf('✓ STAGE 2 COMPLETE (%.1f seconds)\n\n', stage2_time);
-
-%% STAGE 3: SA-Killing Treatment Simulations
-fprintf('╔═══════════════════════════════════════════════════════╗\n');
-fprintf('║  STAGE 3: SA-Killing Treatment Simulations            ║\n');
-fprintf('╚═══════════════════════════════════════════════════════╝\n\n');
-
-% We need to temporarily change to SA-killing folder to access ODE functions
-% but we'll read/write files from our local directory
-fprintf('Accessing ODE solver functions from SA-killing folder...\n');
-
-% Add SA-killing folder to path (for ODE functions)
-addpath('../Effect of SA-killing');
-
-% Read initial conditions from LOCAL data folder
-src_file = sprintf('data/dual_action_reversible_%dx_initial.csv', fold_change);
-
-if ~exist(src_file, 'file')
-    error('Cannot find %s\nStage 2 may have failed', src_file);
-end
-
-fprintf('Using initial conditions: %s\n\n', src_file);
-
-fprintf('Running SA-killing treatment simulations...\n');
-fprintf('⚠️  This may take 1-2 hours depending on your system\n\n');
-
-tic;
-run_treatment_dual_action(src_file, fold_change);
-stage3_time = toc;
-
-fprintf('✓ STAGE 3 COMPLETE (%.1f minutes)\n\n', stage3_time/60);
-
-%% STAGE 4: Generate Plots
-fprintf('╔═══════════════════════════════════════════════════════╗\n');
-fprintf('║  STAGE 4: Generate Treatment Response Heatmaps        ║\n');
-fprintf('╚═══════════════════════════════════════════════════════╝\n\n');
-
-tic;
-generate_plots_dual_action(fold_change);
-stage4_time = toc;
-
-fprintf('✓ STAGE 4 COMPLETE (%.1f seconds)\n\n', stage4_time);
-
-%% Final Summary
-fprintf('╔═══════════════════════════════════════════════════════╗\n');
-fprintf('║           COMPLETE WORKFLOW FINISHED                  ║\n');
-fprintf('╚═══════════════════════════════════════════════════════╝\n\n');
-
-total_time = stage1a_time + stage1b_time + stage2_time + stage3_time + stage4_time;
-
-fprintf('═══ Execution Summary ═══\n');
-fprintf('Total time: %.1f hours\n', total_time/3600);
-fprintf('  Stage 1 (Attenuation):     %.1f min\n', (stage1a_time + stage1b_time)/60);
-fprintf('  Stage 2 (Extract ICs):     %.0f sec\n', stage2_time);
-fprintf('  Stage 3 (SA-killing):      %.1f min\n', stage3_time/60);
-fprintf('  Stage 4 (Plotting):        %.0f sec\n', stage4_time);
-fprintf('\n');
-
-fprintf('═══ Output Files ═══\n');
-fprintf('Attenuation results:\n');
-fprintf('  → data/attenuation_irreversible_20x.csv\n');
-fprintf('  → data/attenuation_reversible_20x.csv\n');
-fprintf('\n');
-fprintf('Initial conditions:\n');
-fprintf('  → data/dual_action_reversible_20x_initial.csv\n');
-fprintf('  → data/dual_action_irreversible_20x_initial.csv\n');
-fprintf('\n');
-fprintf('Treatment results:\n');
-fprintf('  → data/reversible_treatment_results_dual_action_20x.csv\n');
-fprintf('\n');
-fprintf('Figures (Figure 3 panels with attenuation):\n');
-fprintf('  → figures/Fig3_DualAction_20x_AllSites.png\n');
-fprintf('  → figures/Fig3_DualAction_20x_Reversible.png\n');
-fprintf('  → figures/Fig3_DualAction_20x_Irreversible.png\n');
-fprintf('\n');
-
-fprintf('╔═══════════════════════════════════════════════════════╗\n');
-fprintf('║                      SUCCESS!                         ║\n');
-fprintf('╚═══════════════════════════════════════════════════════╝\n');
-
-%% ========================================================================
-%% LOCAL FUNCTIONS
-%% ========================================================================
-
-%% Helper: Run treatment with custom input file
-function run_treatment_dual_action(input_file, fold_change)
-    % Wrapper for g_TreatmentResponse that uses dual-action initial conditions
+for type_idx = 1:length(patient_types)
+    patient_type = patient_types{type_idx};
     
-    % Load patient data
-    sites = readmatrix(input_file);
-    n_sites = size(sites, 1);
+    fprintf('\n--- %s patients ---\n\n', upper(patient_type));
     
-    fprintf('Loaded %d reversible sites (after %dx attenuation)\n\n', n_sites, fold_change);
+    % Run attenuation
+    fprintf('Running attenuation...\n');
+    stage1_start = tic;
+    [AllVirtualPatientTypes, ~] = g_AttenuationFlexible(patient_type, fold_change, fold_change);
+    stage1_time = toc(stage1_start);
     
-    % Treatment parameter ranges (matching Figure 3)
-    delta_AS_start = 0;
-    delta_AS_step = 1;
-    delta_AS_end = 5;
-    t_end_start = 1;
-    t_end_step = 0.5;
-    t_end_end = 4;
+    fprintf('✓ Attenuation complete (%.1f minutes)\n', stage1_time/60);
     
-    % Generate treatment combinations
-    treatment = [];
-    for strength = delta_AS_start:delta_AS_step:delta_AS_end
-        for duration = t_end_start:t_end_step:t_end_end
-            treatment = [treatment; strength, duration];
-        end
-    end
-    n_treatments = size(treatment, 1);
+    % Calculate recovery percentage correctly (count patients, not states)
+    patient_ids = unique(AllVirtualPatientTypes(:, 1));
+    n_unique_patients = length(patient_ids);
     
-    fprintf('Treatment combinations: %d\n', n_treatments);
-    fprintf('Total simulations: %d\n\n', n_treatments * n_sites);
+    n_recovered = 0;
     
-    % Run simulations (similar to g_TreatmentResponse logic)
-    options = odeset('NonNegative', 1, 'RelTol', 1e-4, 'AbsTol', 1e-4);
-    options_event = odeset('NonNegative', 1, 'Events', @(t, y)f_EventHealthy(t, y), ...
-                           'RelTol', 1e-4, 'AbsTol', 1e-4);
+    fprintf('  Analyzing %d unique patients...', n_unique_patients);
+    progress_update = max(1, floor(n_unique_patients/10));  % Update every 10%
     
-    frac_success = zeros(n_treatments, 1);
-    S = 1;
-    
-    fprintf('Running simulations...\n');
-    fprintf('Progress: [');
-    
-    for i = 1:n_treatments
-        n_success = 0;
-        
-        parfor ii = 1:n_sites
-            if simulate_single_site_dual(sites(ii, :), treatment(i, :), S, ...
-                                   options, options_event)
-                n_success = n_success + 1;
-            end
+    for i = 1:n_unique_patients
+        if mod(i, progress_update) == 0
+            fprintf(' %.0f%%', 100*i/n_unique_patients);
         end
         
-        frac_success(i) = n_success / n_sites;
+        patient_id = patient_ids(i);
+        patient_states = AllVirtualPatientTypes(AllVirtualPatientTypes(:, 1) == patient_id, :);
+        all_regions = patient_states(:, 26);
         
-        if mod(i, max(1, floor(n_treatments/50))) == 0
-            fprintf('=');
+        % Check if ALL states are in healthy regions (1-4)
+        if all(all_regions >= 1 & all_regions <= 4)
+            n_recovered = n_recovered + 1;
         end
     end
+    fprintf(' 100%%\n');
     
-    fprintf(']\n\n');
+    percentage = 100 * n_recovered / n_unique_patients;
     
-    % Save results to LOCAL data folder
-    output_file = sprintf('data/reversible_treatment_results_dual_action_%dx.csv', fold_change);
-    treat_plot = [treatment, frac_success];
-    writematrix(treat_plot, output_file);
+    fprintf('✓ Complete (%.1f min)\n', stage1_time/60);
+    fprintf('  Recovery from attenuation alone: %.1f%% (%d/%d patients)\n\n', ...
+            percentage, n_recovered, n_unique_patients);
     
-    fprintf('✓ Saved: %s\n', output_file);
+    % Store stats
+    attenuation_stats.(patient_type).data = AllVirtualPatientTypes;
+    attenuation_stats.(patient_type).percentage = percentage;
+    attenuation_stats.(patient_type).n_recovered = n_recovered;
+    attenuation_stats.(patient_type).n_total = n_unique_patients;
 end
 
-%% Helper: Simulate single site (dual-action version)
-function success = simulate_single_site_dual(site_data, treatment_params, S, options, options_event)
-    % Same as g_TreatmentResponse but explicitly for dual-action data
+%% Stage 2: Extract Damaged Sites
+fprintf('\n╔═══════════════════════════════════════════════════════╗\n');
+fprintf('║     STAGE 2: Extract Damaged Sites (Regions 5-9)     ║\n');
+fprintf('╚═══════════════════════════════════════════════════════╝\n\n');
+
+for type_idx = 1:length(patient_types)
+    patient_type = patient_types{type_idx};
     
-    kappa_A  = site_data(3);    kappa_E  = site_data(10);
-    A_max    = site_data(4);    E_max    = site_data(11);
-    gamma_AB = site_data(5);    gamma_EB = site_data(12);  % Already enhanced!
-    delta_AE = site_data(6);    delta_EA = site_data(13);
-    A_th     = site_data(7);    E_th     = site_data(14);
-    E_pth    = site_data(8);    A_pth    = site_data(15);
-    gamma_AE = site_data(9);    kappa_B  = site_data(16);
-    delta_B  = site_data(17);
-    delta_BA = site_data(18);
-    delta_BE = site_data(19);
+    fprintf('\n--- %s patients ---\n\n', upper(patient_type));
     
-    A_0 = site_data(20);
-    E_0 = site_data(21);
-    B_0 = site_data(22);
+    AllVPT = attenuation_stats.(patient_type).data;
     
-    if A_0 <= 1, A_0 = 0; end
-    if E_0 <= 1, E_0 = 0; end
+    % Filter for damaged regions (5-9)
+    region_col = 26;
+    damaged_mask = (AllVPT(:, region_col) >= 5) & (AllVPT(:, region_col) <= 9);
+    damaged_sites = AllVPT(damaged_mask, :);
     
-    delta_AS = treatment_params(1);
-    t_end = treatment_params(2);
+    fprintf('  Total sites: %d\n', size(AllVPT, 1));
+    fprintf('  Undamaged (regions 1-4): %d (%.1f%%)\n', ...
+        sum(~damaged_mask), 100*sum(~damaged_mask)/size(AllVPT, 1));
+    fprintf('  Damaged (regions 5-9): %d (%.1f%%)\n', ...
+        size(damaged_sites, 1), 100*size(damaged_sites, 1)/size(AllVPT, 1));
     
-    [t1, y1] = ode15s(@(t, y) f_defineODEs_SAkilling(y, kappa_A, A_max, gamma_AB, ...
-        delta_AE, A_th, E_pth, gamma_AE, kappa_E, E_max, gamma_EB, delta_EA, E_th, ...
-        A_pth, kappa_B, delta_B, delta_BA, delta_BE, delta_AS, S), ...
-        [0, t_end], [A_0, E_0, B_0], options);
-    
-    A_pert = max(1, y1(end, 1) - 1);
-    E_pert = max(1, y1(end, 2) - 1);
-    B_post = y1(end, 3);
-    
-    [t2, y2] = ode15s(@(t, y) f_defineODEs(y, kappa_A, A_max, gamma_AB, delta_AE, ...
-        A_th, E_pth, gamma_AE, kappa_E, E_max, gamma_EB, delta_EA, E_th, A_pth, ...
-        kappa_B, delta_B, delta_BA, delta_BE), ...
-        [t1(end), t1(end) + 1e6], [A_pert, E_pert, B_post], options_event);
-    
-    if t2(end) >= (t1(end) + 1e6)
-        success = false;
-        return;
+    if isempty(damaged_sites)
+        fprintf('  ⚠️  No damaged sites - all recovered from attenuation!\n');
+        attenuation_stats.(patient_type).damaged_sites = [];
+        continue;
     end
     
-    A_stab = max(1, y2(end, 1) - 1);
-    E_stab = max(1, y2(end, 2) - 1);
-    B_final = y2(end, 3);
+    % Extract initial conditions using priority rules
+    initial_conditions = extract_worst_case_initial_conditions(damaged_sites);
     
-    [~, y3] = ode15s(@(t, y) f_defineODEs(y, kappa_A, A_max, gamma_AB, delta_AE, ...
-        A_th, E_pth, gamma_AE, kappa_E, E_max, gamma_EB, delta_EA, E_th, A_pth, ...
-        kappa_B, delta_B, delta_BA, delta_BE), ...
-        [t2(end), t1(end) + 1e6], [A_stab, E_stab, B_final], options);
+    % Save initial conditions
+    ic_file = sprintf('data/%s_SAkilling_post_attenuation.csv', patient_type);
+    writematrix(initial_conditions, ic_file);
+    fprintf('  ✓ Saved: %s (%d sites)\n', ic_file, size(initial_conditions, 1));
     
-    success = (y3(end, 3) == 1);
+    attenuation_stats.(patient_type).damaged_sites = initial_conditions;
 end
 
-%% Helper: Generate plots with dual-action results
-function generate_plots_dual_action(fold_change)
-    % Modified version of g_Plot_Main for dual-action results
-    % Saves to LOCAL figures folder
+%% Stage 3: Apply SA-Killing Treatment
+fprintf('\n╔═══════════════════════════════════════════════════════╗\n');
+fprintf('║         STAGE 3: SA-Killing Treatment                 ║\n');
+fprintf('╚═══════════════════════════════════════════════════════╝\n\n');
+
+for type_idx = 1:length(patient_types)
+    patient_type = patient_types{type_idx};
     
-    % Input files from LOCAL data folder
-    results_file = sprintf('data/reversible_treatment_results_dual_action_%dx.csv', fold_change);
-    reversible_file = sprintf('data/dual_action_reversible_%dx_initial.csv', fold_change);
-    irreversible_file = sprintf('data/dual_action_irreversible_%dx_initial.csv', fold_change);
+    fprintf('\n--- %s patients ---\n\n', upper(patient_type));
     
-    % Load data
-    treat_plot = readmatrix(results_file);
-    n_reversible = size(readmatrix(reversible_file), 1);
-    n_irreversible = size(readmatrix(irreversible_file), 1);
-    n_total = n_reversible + n_irreversible;
+    damaged_sites = attenuation_stats.(patient_type).damaged_sites;
     
-    fprintf('Patient counts (still damaged after attenuation):\n');
-    fprintf('  Reversible: %d\n', n_reversible);
-    fprintf('  Irreversible: %d\n', n_irreversible);
-    fprintf('  Total: %d\n\n', n_total);
+    if isempty(damaged_sites)
+        fprintf('Skipping SA-killing (no damaged sites)\n');
+        
+        % Create dummy results showing 100% success
+        strengths = 0:1:5;
+        durations = 1:0.5:4;
+        [S, D] = meshgrid(strengths, durations);
+        results = [S(:), D(:), ones(numel(S), 1)];
+        
+        results_file = sprintf('data/%s_treatment_results_dual_action.csv', patient_type);
+        writematrix(results, results_file);
+        fprintf('  ✓ Saved: %s (100%% success - no treatment needed)\n', results_file);
+        continue;
+    end
     
-    % Extract data
-    strengths = unique(treat_plot(:, 1));
-    durations = unique(treat_plot(:, 2));
-    reversible_success = treat_plot(:, 3);
+    % Run SA-killing treatment
+    fprintf('Testing SA-killing treatment combinations...\n');
+    stage3_start = tic;
+    g_TreatmentResponse_DualAction(patient_type);
+    stage3_time = toc(stage3_start);
     
-    n_strengths = length(strengths);
-    n_durations = length(durations);
-    
-    % Reshape
-    M_reversible = reshape(reversible_success, [n_durations, n_strengths])';
-    M_irreversible = zeros(size(M_reversible));
-    
-    weight_rev = n_reversible / n_total;
-    weight_irrev = n_irreversible / n_total;
-    M_all = weight_rev * M_reversible + weight_irrev * M_irreversible;
-    
-    % Generate plots in LOCAL figures folder
-    output_folder = 'figures';
-    mkdir(output_folder);
-    
-    fig_suffix = sprintf('DualAction_%dx', fold_change);
-    
-    create_heatmap_dual(M_all, durations, strengths, ...
-        '% of all damaged sites that recover', ...
-        sprintf('Fig3_%s_AllSites.png', fig_suffix), output_folder);
-    
-    create_heatmap_dual(M_reversible, durations, strengths, ...
-        '% of reversible sites that recover', ...
-        sprintf('Fig3_%s_Reversible.png', fig_suffix), output_folder);
-    
-    create_heatmap_dual(M_irreversible, durations, strengths, ...
-        '% of irreversible sites that recover', ...
-        sprintf('Fig3_%s_Irreversible.png', fig_suffix), output_folder);
-    
-    fprintf('✓ Generated 3 heatmaps in figures/ folder\n');
+    fprintf('✓ SA-killing complete (%.1f min)\n', stage3_time/60);
 end
 
-%% Helper: Create heatmap
-function create_heatmap_dual(M, durations, strengths, title_text, filename, output_folder)
-    fig = figure('Position', [100, 100, 600, 500]);
+%% Stage 4: Generate Plots
+fprintf('\n╔═══════════════════════════════════════════════════════╗\n');
+fprintf('║         STAGE 4: Generate Heatmap Figures             ║\n');
+fprintf('╚═══════════════════════════════════════════════════════╝\n\n');
+
+% Save attenuation statistics for plotting function
+attenuation_summary = [];
+for type_idx = 1:length(patient_types)
+    patient_type = patient_types{type_idx};
+    pct = attenuation_stats.(patient_type).percentage / 100;  % Convert to fraction
+    n_rec = attenuation_stats.(patient_type).n_recovered;
+    n_tot = attenuation_stats.(patient_type).n_total;
     
-    x_range = [min(durations), max(durations)];
-    y_range = [min(strengths), max(strengths)];
-    M_round = round(M * 100, -1);
+    % Save as: [type_code, recovery_fraction, n_recovered, n_total]
+    type_code = strcmp(patient_type, 'reversible');  % 1 for reversible, 0 for irreversible
+    attenuation_summary = [attenuation_summary; type_code, pct, n_rec, n_tot];
+end
+writematrix(attenuation_summary, 'data/attenuation_recovery_stats.csv');
+
+g_Plot_DualAction();
+
+%% Summary
+fprintf('\n╔═══════════════════════════════════════════════════════╗\n');
+fprintf('║            DUAL-ACTION PIPELINE COMPLETE              ║\n');
+fprintf('╚═══════════════════════════════════════════════════════╝\n\n');
+
+fprintf('Summary:\n');
+fprintf('  Attenuation (20x SA + 20x SE):\n');
+for type_idx = 1:length(patient_types)
+    patient_type = patient_types{type_idx};
+    pct = attenuation_stats.(patient_type).percentage;
+    n_rec = attenuation_stats.(patient_type).n_recovered;
+    n_tot = attenuation_stats.(patient_type).n_total;
+    fprintf('    %s: %.1f%% recovered (%d/%d patients with ALL states healthy)\n', ...
+            capitalize_first(patient_type), pct, n_rec, n_tot);
+end
+
+%% Helper Functions
+
+function initial_conditions = extract_worst_case_initial_conditions(patient_data)
+    % Extract one initial condition per patient using priority rules
     
-    clims = [0, 0.95];
-    colormap('gray');
-    imagesc(x_range, y_range, M, clims);
-    colorbar;
+    patient_ids = unique(patient_data(:, 1));
+    n_patients = length(patient_ids);
+    initial_conditions = zeros(n_patients, size(patient_data, 2));
     
-    hold on;
-    [C, h] = contour(M_round, 'w-', 'ShowText', 'on');
-    clabel(C, h, 'FontSize', 15, 'color', 'w');
-    h.LineWidth = 1;
-    hold off;
+    fprintf('  Processing %d patients for initial conditions...', n_patients);
+    progress_update = max(1, floor(n_patients/10));
     
-    xlabel('Duration [days]', 'FontSize', 16);
-    ylabel('Strength [days^{-1}]', 'FontSize', 16);
-    title(title_text, 'FontSize', 14, 'FontWeight', 'bold');
+    for i = 1:n_patients
+        if mod(i, progress_update) == 0
+            fprintf(' %.0f%%', 100*i/n_patients);
+        end
+        
+        patient_id = patient_ids(i);
+        patient_rows = patient_data(patient_data(:, 1) == patient_id, :);
+        regions = patient_rows(:, 26);
+        B_stars = patient_rows(:, 22);
+        
+        % Priority 1: SA-driven (7/8/9)
+        sa_mask = (regions == 7) | (regions == 8) | (regions == 9);
+        if any(sa_mask)
+            [~, idx] = min(B_stars(sa_mask));
+            sa_rows = patient_rows(sa_mask, :);
+            initial_conditions(i, :) = sa_rows(idx, :);
+            continue;
+        end
+        
+        % Priority 2: SE-driven (5/6)
+        se_mask = (regions == 5) | (regions == 6);
+        if any(se_mask)
+            [~, idx] = min(B_stars(se_mask));
+            se_rows = patient_rows(se_mask, :);
+            initial_conditions(i, :) = se_rows(idx, :);
+            continue;
+        end
+        
+        % Fallback: smallest B*
+        [~, idx] = min(B_stars);
+        initial_conditions(i, :) = patient_rows(idx, :);
+    end
+    fprintf(' 100%%\n');
     
-    ax = gca;
-    ax.TickLength = [0.05, 0.05];
-    ax.LineWidth = 0.75;
-    ax.FontSize = 16;
-    set(gca, 'YDir', 'normal');
-    
-    output_path = fullfile(output_folder, filename);
-    print(fig, output_path, '-dpng', '-r300');
-    
-    close(fig);
+    % Report region distribution
+    selected_regions = initial_conditions(:, 26);
+    fprintf('  Initial condition regions:\n');
+    for region = [5, 6, 7, 8, 9]
+        count = sum(selected_regions == region);
+        if count > 0
+            fprintf('    Region %d: %d sites (%.1f%%)\n', region, count, 100*count/n_patients);
+        end
+    end
+end
+
+function str = capitalize_first(str)
+    if ~isempty(str)
+        str(1) = upper(str(1));
+    end
 end
