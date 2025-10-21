@@ -754,15 +754,11 @@ This work is licensed under a [Creative Commons Attribution-NonCommercial-NoDeri
 
 ## 🔄 Version History
 
-- **v1.1** (2025-10-XX): Major refactoring
-  - Added streamlined violin plot scripts with automatic Statistics Toolbox fallback
-  - Added automatic CSV classification generation (`g_ClassificationFiles.m`)
-  - Improved steady state visualization with dynamic region detection
+- **v1.1** (2025-10-21): Major refactoring
   - Added comprehensive documentation with complete workflow guide
-  - Batch mode support for all visualization scripts
-  - Fixed underscores in plot titles (no more unwanted subscripts!)
+  - Streamlined workflow to make figures easier to reproduce
 
-- **v1.0** (2024-XX-XX): Initial release with publication
+- **v1.0** (2024-02-04): Initial release with publication
 
 ---
 
