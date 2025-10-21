@@ -140,9 +140,28 @@ run run_violin_analysis('generate_all', true)
 ---
 
 #### Step 5: Proposed Treatment Strategy → Figure 5, Supplementary Figure S6
-In progress
+```matlab
+% Navigate to dual-action treatment folder
+cd '../Effect of dual-action treatment'
 
----
+% Explore effect of dual-action treatment
+run run_DualAction.m % generates Figure 5b - d in main text
+run run_AttenuationOnly_supplementary.m % generates Figure S6b - d in supplementary materials
+```
+
+**Outputs**:
+
+**SA-killing strength varied between 0-5 days<sup>-1</sup> and 1-4 days with 20-fold attenuation on SA and SE growths**
+- `Figure5_AllSites.png` - Treatment response for all virtual skin sites with a damaged skin state
+- `Figure5_Irreversible.png` - Treatment response for irreversible sites
+- `Figure5_Reversible.png` - Treatment response for reversible sites
+
+**SA and SE growth attenuation varied between 1- and 20-fold**
+- `FigureS6_AttenuationHeatmaps.png` - Proportion of virtual skin sites that gain an undamaged skin state
+
+**Figures**:
+- **Figure 5b-d**: (b) `Figure5_AllSites.png`, (c) `Figure5_Irreversible.png`, and (d) `Figure5_Reversible.png`
+- **Supplementary Figure S6b-d**: `FigureS6_AttenuationHeatmaps.png`
 
 ## 🎨 Figure Generation
 
@@ -153,7 +172,7 @@ In progress
 | **Figure 2** | `run_steady_state_plots.m` | Group virtual skin sites | Illustration of three types of virtual skin sites defined by whether the stable skin state converged to undamaged or damaged |
 | **Figure 3b-d** | `run_SA_killing_main.m` | Effect of SA-killing | Proportion of all damaged skin sites that recover to an undamaged skin state |
 | **Figure 4a** | `run_violin_analysis.m` | Violin plots | Parameter distributions by patient type |
-| **Figure 5b-d** | In progress | Effect of dual-action treatment | Proportion of all damaged skin sites that recover to an undamaged skin state |
+| **Figure 5b-d** | `run_DualAction.m` | Effect of dual-action treatment | Proportion of all damaged skin sites that recover to an undamaged skin state |
 
 ### Supplementary Figures
 
@@ -164,8 +183,7 @@ In progress
 | **Figure S3** | `run_example_supplementary.m` | Effect of SA-killing | SA-killing applied to one example skin site |
 | **Figure S4** | `run_violin_analysis.m` | Violin plots | Distribution of parameters driving asymptomatic, reversible, and irreversible skin sites |
 | **Figure S5** | `run_violin_analysis.m` | Violin plots | Distribution of parameters for sites with (a) non-damaging and (b) damaging SE strains |
-| **Figure S6a** | In progress | Effect of dual-action treatment | Recovery of damaged skin sites when fixed duration (2 days) and strength (3 days<sup>-1</sup>) of SA-killing is applied, but SA and SE growth attenuations are varied |
-| **Figure S6b-d** | In progress | Effect of dual-action treatment | Percentage of sites that gain a non-damaged state when SA and SE growth attenuation is enhanced by different strengths |
+| **Figure S6b-d** | `run_AttenuationOnly_supplementary.m` | Effect of dual-action treatment | Percentage of sites that gain a non-damaged state when SA and SE growth attenuation is enhanced by different strengths |
 
 
 ## 📁 Repository Structure
@@ -219,6 +237,20 @@ SASE-model/
 │       └── ViolinPlots_SE_nondamaging.png
 │
 ├── Effect of dual-action treatment/ # Dual-action treatment analysis
+│   ├── run_DualAction.m                                    # Generates Figure 5b-d in paper   
+│   ├── run_AttenuationOnly_supplementary.m                 # Generates Figure S6b-d in paper  
+│   ├── data/                                               
+│   │   ├── attenuation_irreversible_SA20.0_SE20.0.csv      # Steady states after 20-fold attenuation
+│   │   ├── attenuation_reversible_SA20.0_SE20.0.csv        # Steady states after 20-fold attenuation
+│   │   ├── irreversible_SAkilling_post_attenuation.csv     # Initial conditions for treatment simulations for irreverisble sites
+│   │   ├── reversible_SAkilling_post_attenuation.csv       # Initial conditions for treatment simulations for reverisble sites
+│   │   ├── irreversible_treatment_results_dual_action.csv  # Treatment results
+│   │   └── reversible_treatment_results_dual_action.csv    # Treatment results
+│   └── figures/                    
+│       ├── Figure5_AllSites.png
+│       ├── Figure5_Irreversible.png
+│       ├── Figure5_Reversible.png
+│       └── FigureS6_AttenuationHeatmaps.png
 └── README.md                       # This file
 ```
 
@@ -557,13 +589,79 @@ run_violin_analysis('all', false)
 - `figures/ViolinPlots_SE_damaging.png` - Supplementary: SE-damaging strain analysis (Supplementary Figure S5a)
 - `figures/ViolinPlots_SE_nondamaging.png` - Supplementary: SE-non-damaging strain analysis (Supplementary Figure S5b)
 
+## Stage 5: Dual-action treatment strategy
+
+**Location**: `Effect of dual-action treatment/`
+
+**Purpose**: Analyse combined SA- and SE-attenuation and SA-killing treatment effectiveness on virtual patients.
+
+### File Organisation:
+
+### 🚀 Main Runner Scripts (Entry Points)
+
+| Script | Purpose | Parameters | Outputs |
+|--------|---------|------------|---------|
+| **`run_DualAction.m`** | Generate Figure 5b-d | 20× SA- and SE-attenuation + SA-killing (0-5 strength, 1-4 days) | `DualAction_Heatmap.png`, treatment CSV files |
+| **`run_AttenuationOnly_supplementary.m`** | Generate Supplementary Figure S6b-d | SA- and SE-attenuation grid (1×, 10×, 20×) | `FigureS6_AttenuationHeatmaps.png`, attenuation CSV files |
+
+### 🔧 Core Analysis Functions (Called Automatically)
+
+| Function | Purpose | Used By |
+|----------|---------|---------|
+| **`g_AttenuationFlexible.m`** | Apply attenuation enhancement to bacterial growth rates<br/>**Input**: Patient CSV files<br/>**Output**: Post-attenuation steady states | `run_DualAction.m`, `run_AttenuationOnly_supplementary.m` |
+| **`g_TreatmentResponse_DualAction.m`** | Run SA-killing treatment on attenuated patients<br/>**Input**: `data/[patient_type]_SAkilling_post_attenuation.csv`<br/>**Output**: Dual-action treatment results | `run_DualAction.m` |
+
+### 📊 Visualisation Functions (Called Automatically)
+
+| Function | Purpose | Used By |
+|----------|---------|---------|
+| **`g_Plot_DualAction.m`** | Generate dual-action treatment heatmaps (Figure 5b-d) | `run_DualAction.m` |
+| **`g_Plot_AttenuationOnly.m`** | Generate attenuation-only heatmaps (Supplementary Figure S6b-d) | `run_AttenuationOnly_supplementary.m` |
+
+### ⚙️ Mathematical Functions (Called Automatically)
+
+| Function | Purpose |
+|----------|---------|
+| **`f_defineODEs.m`** | ODEs defining mathematical model |
+| **`f_defineODEs_SAkilling.m`** | ODEs with SA-killing term |
+| **`f_EventHealthy.m`** | Event detection for when a healthy state (B* = 1) is reached |
+
+### Workflow:
+
+```
+Prerequisites:
+├── ../Effect of SA-killing/data/reversible_SAkilling.csv ✅ 
+├── ../Effect of SA-killing/data/irreversible_SAkilling.csv ✅ 
+
+Dual-Action Workflow (Figure 5b-d):
+run_DualAction.m
+├── Stage 1: g_AttenuationFlexible(20×, 20×) → Apply 20× SA/SE growth attenuation
+├── Stage 2: Extract damaged sites → data/reversible_SAkilling_post_attenuation.csv
+├── Stage 3: g_TreatmentResponse_DualAction → SA-killing on attenuated patients  
+└── Stage 4: g_Plot_DualAction → figures/DualAction_Heatmap.png
+
+Attenuation-Only Workflow (Figure S6b-d):
+run_AttenuationOnly_supplementary.m
+├── 3×3 grid analysis: g_AttenuationFlexible(SA_fold, SE_fold)
+│   ├── SA folds: [1×, 10×, 20×] 
+│   ├── SE folds: [1×, 10×, 20×]
+│   └── Total: 9 combinations × 2 patient types = 18 simulations
+├── Weighted combination across patient populations
+└── g_Plot_AttenuationOnly → figures/FigureS6_AttenuationHeatmaps.png
+```
+
+### Output Files:
+
+### Data Files (Dual-Action Treatment)
+- `data/reversible_SAkilling_post_attenuation.csv` - Initial conditions for reversible patients after 20× attenuation
+- `data/irreversible_SAkilling_post_attenuation.csv` - Initial conditions for irreversible patients after 20× attenuation  
+- `data/reversible_treatment_results_dual_action.csv` - Dual-action treatment simulation results
+- `data/irreversible_treatment_results_dual_action.csv` - Dual-action treatment simulation results
+
+### Figure Files
+- `figures/DualAction_Heatmap.png` - Main text: Dual-action treatment response heatmap
+- `figures/FigureS6_AttenuationHeatmaps.png` - Supplementary: Attenuation-only effectiveness grid
 ---
-
-### Stage 5: Dual-action treatment strategy
-
-**Location**: `Effect of SA-killing/` and `Effect of dual-action treatment/`
-
-[To be documented]
 
 ## 📊 Data Specifications
 
