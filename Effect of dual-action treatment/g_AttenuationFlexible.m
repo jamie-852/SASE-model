@@ -1,24 +1,27 @@
-function [AllVirtualPatientTypes, percentage] = g_AttenuationFlexible(patient_type, SA_fold, SE_fold)
-% g_AttenuationFlexible - Apply separate fold-change enhancements to SA and SE parameters
+% g_AttenuationFlexible.m
 %
-% SYNTAX:
-%   [AllVirtualPatientTypes, percentage] = g_AttenuationFlexible(patient_type, SA_fold, SE_fold)
+% Purpose: Dual-action treatment simulation with separate SA and SE attenuation enhancements
+%          Applies fold-change multipliers to gamma_AB and gamma_EB parameters
 %
-% INPUTS:
-%   patient_type - 'reversible' or 'irreversible'
-%   SA_fold      - Fold-change for gamma_AB (SA attenuation parameter)
-%   SE_fold      - Fold-change for gamma_EB (SE attenuation parameter)
+% Usage:
+%       g_AttenuationFlexible('reversible', 1, 1)       % No enhancement (baseline)
+%       g_AttenuationFlexible('irreversible', 10, 1)    % 10x SA enhancement only
+%       g_AttenuationFlexible('reversible', 1, 20)      % 20x SE enhancement only
+%       g_AttenuationFlexible('irreversible', 10, 20)   % Both enhancements
 %
-% OUTPUTS:
-%   AllVirtualPatientTypes - Matrix with classified patients
-%   percentage - % of patients gaining healthy states
+% Arguments:
+%   patient_type: 'reversible' or 'irreversible' (patient classification)
+%   SA_fold: Fold-change multiplier for gamma_AB (SA attenuation parameter)
+%   SE_fold: Fold-change multiplier for gamma_EB (SE attenuation parameter)
 %
-% OUTPUT FILES:
-%   data/attenuation_[type]_SA[x]_SE[y].csv - Full steady state results
+% Returns:
+%   AllVirtualPatientTypes: Matrix with enhanced steady states and classifications
+%   percentage: Percentage of patients gaining healthy barrier states (B* = 1)
 %
-% Author: Jamie Lee (refactored)
-% Date: October 14, 2025
+% Author: Jamie Lee
+% Date: 14 October 2025
 
+function [AllVirtualPatientTypes, percentage] = g_AttenuationFlexible(patient_type, SA_fold, SE_fold)
 %% Step 1: Setup paths and load data
 
 current_dir = pwd;
@@ -184,7 +187,7 @@ if ~exist(figures_folder, 'dir'), mkdir(figures_folder); end
 temp_file = fullfile(data_folder, 'AllVirtualPatients_latest.csv');
 writematrix(AllVirtualPatients, temp_file);
 
-% Suppress a_PatientGroups output (it's verbose)
+% Suppress a_PatientGroups output
 evalc('a_PatientGroups');
 
 % Verify the output was created in the current workspace; if not, try common output files
